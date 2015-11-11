@@ -59,6 +59,6 @@ class PFLocaliser(PFLocaliserBase):
 	#Reinitialise the cloud in AMCL
 	def reinitialise_cloud(self, initialpose, ratio, random):
 		#return init.gauss_initialise(initialpose, M, ratio, random, self, False)
-		return uniform_initialise(initialpose, M, self)
+		return init.uniform_initialise(initialpose, M, self)
 		
 		

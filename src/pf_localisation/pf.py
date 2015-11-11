@@ -60,5 +60,3 @@ class PFLocaliser(PFLocaliserBase):
 	def reinitialise_cloud(self, initialpose, ratio, random):
 		#return init.gauss_initialise(initialpose, M, ratio, random, self, False)
 		return init.uniform_initialise(initialpose, M, self)
-		
-		
