@@ -47,6 +47,7 @@ class InitialiseCloud():
 			newPose.position.y = yNewPose
 			newPose.orientation = None
 
+			#Different orientations assigned for different tests/situations
 			if test:
 				newPose.orientation = initialpose.orientation
 			elif rand:
