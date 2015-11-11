@@ -1,0 +1,50 @@
+#!/usr/bin/python
+import math
+import rospy
+import time
+
+from pf_base import PFLocaliserBase
+from util import rotateQuaternion, getHeading
+
+class OdoTest():
+
+	lastTime = -1
+
+	def __init__(self):
+		global lastTime
+		lastTime = -1
+
+	def test(self, scan, pf, timeStart):
+		
+		global lastTime
+		totalP = 0		
+
+		for j in range(0, len(pf.particlecloud.poses)):
+			pose = pf.particlecloud.poses[j]
+			count = 0
+			p = 0
+
+			for i, obs_bearing in pf.sensor_model.reading_points:
+            			# For each range...
+      		      		obs_range = scan.ranges[i]
+            
+        	    		# Laser reports max range as zero, so set it to range_max
+        	    		if (obs_range <= 0.0):
+        	        		obs_range = self.scan_range_max 
+            
+        	    		# Compute the range according to the map
+        	    		map_range = pf.sensor_model.calc_map_range(pose.position.x, pose.position.y, getHeading(pose.orientation) + obs_bearing)
+				count += 1
+            			p += pf.sensor_model.predict(obs_range, map_range)
+			totalP += p/count     		
+
+		totalP = totalP / len(pf.particlecloud.poses)
+		newTime = int(time.time() - timeStart)
+
+		if lastTime != newTime:
+			lastTime = newTime
+			file = open('odoTest.txt', 'a+')
+			file.write(str(newTime) + ": " + str(totalP) + "\n")
+			file.close()
+			
+		return pf.particlecloud
