@@ -12,28 +12,17 @@ class UpdateParticleCloud():
 	
 	totalWeight = 0.0
 	maxWeight = 0.0
-	WIDTH = 0.0
-	HEIGHT = 0.0
 	particleWeights = []
-	storedPose = None
-	listLocation = 0
 	
 	#Weights all of the particles in the particle cloud
 	def weight_particles(self, scan, pf):
 
 		global maxWeight
 		global totalWeight
-		global HEIGHT
-		global WIDTH
 		global particleWeights
-		global exploded
-		global listLocation
 
 		maxWeight = 1.0
 		totalWeight = 1.0
-
-		HEIGHT = pf.occupancy_map.info.height * pf.occupancy_map.info.resolution
-		WIDTH = pf.occupancy_map.info.width * pf.occupancy_map.info.resolution
 		
 		particleWeights = []
 		
@@ -53,7 +42,6 @@ class UpdateParticleCloud():
 		self.weight_particles(scan, pf)
 		
 		resampledPoses = []
-		index = 0
 		notAccepted = True
 		numParticles = len(pf.particlecloud.poses)
 
@@ -110,7 +98,6 @@ class UpdateParticleCloud():
 
 	#Updates particles according to AMCL
 	def update_amcl(self, scan, pf):
-		global listLocation
 
 		self.weight_particles(scan, pf)
 
@@ -120,7 +107,6 @@ class UpdateParticleCloud():
 
 		#if the maximum weighted particle has a weight below 10 reinitialise the particles
 		if maxWeight < 7:
-			exploded = True
 
 			pf.particlecloud = pf.reinitialise_cloud(pf.estimatedpose.pose.pose, 3.0, True)
 			self.weight_particles(scan, pf)
