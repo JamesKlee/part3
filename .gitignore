@@ -1,3 +1,9 @@
+# Temporary text editor files
+*.~
+
+# Mac OS X temp files
+*.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
