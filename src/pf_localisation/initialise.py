@@ -58,3 +58,30 @@ class InitialiseCloud():
 			poseArray.poses.append(newPose)
 
 		return poseArray
+
+	def uniform_initialise(self, initialpose, numParticles, pf):
+		self.set_map_dim(pf)		
+		poseArray = PoseArray()
+		poseArray.header.stamp = rospy.Time.now()
+		listFreePoints = pf.listFreePoints
+
+		for m in range(0, numParticles):
+			xNewPose = -1
+			yNewPose = -1
+
+			randUninform = int(random.uniform(0,len(listFreePoints)))
+			coordinates = listFreePoints[randUninform]
+			xNewPose = coordinates.x * pf.occupancy_map.info.resolution
+			yNewPose = coordinates.y * pf.occupancy_map.info.resolution
+			
+			#newPose Parameters
+			newPose  = Pose()
+			newPose.position.x = xNewPose
+			newPose.position.y = yNewPose
+			newPose.orientation = None
+
+			#Different orientations assigned for different tests/situations
+			newPose.orientation = rotateQuaternion(initialpose.orientation, random.vonmisesvariate(0, 4))
+
+			poseArray.poses.append(newPose)
+		return poseArray

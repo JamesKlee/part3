@@ -9,7 +9,7 @@ Converted to Python
 import rospy
 
 from geometry_msgs.msg import (PoseWithCovarianceStamped, PoseArray,
-                               Quaternion,  Transform,  TransformStamped )
+                               Quaternion,  Transform,  TransformStamped, Point )
 from tf.msg import tfMessage
 from tf import transformations
 from nav_msgs.msg import OccupancyGrid
@@ -71,6 +71,9 @@ class PFLocaliserBase(object):
         
         # Sensor model
         self.sensor_model =  sensor_model.SensorModel()
+
+	# Free Point where Robot can be
+	self.listFreePoints = []
 
     def initialise_particle_cloud(self, initialpose):
         """
@@ -277,6 +280,28 @@ class PFLocaliserBase(object):
         """ Set the map for localisation """
         self.occupancy_map = occupancy_map
         self.sensor_model.set_map(occupancy_map)
+
+	#Define Free Occupancy Points
+	sizeRealMap = len(self.occupancy_map.data)
+	sizeSupposedMap = self.occupancy_map.info.width * self.occupancy_map.info.height
+
+	rospy.loginfo("Real Map = %s"%sizeRealMap)
+	rospy.loginfo("Suppose Map = %s"%sizeSupposedMap)
+
+	i = 0
+	occupancyData = self.occupancy_map.data
+
+	for w in range(0, self.occupancy_map.info.width):
+		for h in range(0, self.occupancy_map.info.height):
+			if (occupancyData[i] >= 0.0 and occupancyData[i] <= 19.6) :
+				point = Point()
+				point.x = h
+				point.y = w
+				point.z = 0
+				self.listFreePoints.append(point)
+			i += 1
+	rospy.loginfo("Len listFreePoints= %s"%len(self.listFreePoints))
+
         # Map has changed, so we should reinitialise the particle cloud
         rospy.loginfo("Particle filter got map. (Re)initialising.")
         self.particlecloud = self.initialise_particle_cloud(self.estimatedpose)
