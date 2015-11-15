@@ -12,6 +12,8 @@ from pf_localisation.util import *
 
 from geometry_msgs.msg import ( PoseStamped, PoseWithCovarianceStamped,
                                 PoseArray, Quaternion )
+from pf_localisation.msg import WeightedParticles
+
 from tf.msg import tfMessage
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import OccupancyGrid, Odometry
@@ -45,6 +47,8 @@ class ParticleFilterLocalisationNode(object):
         	self._tf_publisher = rospy.Publisher("/tf", tfMessage)
 		self._init_pose_publisher = rospy.Publisher("/initialpose",
                                                     PoseWithCovarianceStamped)
+		self._weighted_particle_publisher = rospy.Publisher("/weightedParticles",
+                                                    WeightedParticles)
 
         	rospy.loginfo("Waiting for a map...")
         	try:
@@ -135,7 +139,17 @@ class ParticleFilterLocalisationNode(object):
         
                 	# Get updated transform and publish it
                 	self._tf_publisher.publish(self._particle_filter.tf_message)
-    
+
+			# Get particle cloud and weights and publish it 
+			pWeights = WeightedParticles()
+			pWeights.poseArray.header.seq = 1
+			pWeights.poseArray.header.stamp = rospy.get_rostime()
+			pWeights.poseArray.header.frame_id = map_topic
+			pWeights.poseArray.poses = self._particle_filter.particlecloud.poses
+			pWeights.array = self._particle_filter.weights
+
+			self._weighted_particle_publisher.publish(pWeights)
+
     	def _sufficientMovementDetected(self, latest_pose):
         	"""
         	Compares the last published pose to the current pose. Returns true

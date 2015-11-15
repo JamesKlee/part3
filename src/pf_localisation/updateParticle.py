@@ -188,7 +188,6 @@ class UpdateParticleCloud():
 			self.weight_particles(scan, pf)
 			numParticles = len(pf.particlecloud.poses)
 
-
 		resampledPoses = []
 		index = 0
 		notAccepted = True

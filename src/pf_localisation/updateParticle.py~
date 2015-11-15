@@ -226,7 +226,7 @@ class UpdateParticleCloud():
 		#Resample the poses
 		samples = []
 
-		while (num_samples < min_samples or num_samples <= 250) :
+		while (num_samples < min_samples and num_samples <= 250) :
 			#Get Sample
 			notAccepted = True
 			while (notAccepted):
