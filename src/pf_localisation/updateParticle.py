@@ -3,7 +3,6 @@ import math
 import rospy
 
 from geometry_msgs.msg import Pose, PoseArray, Quaternion
-from pf_base import PFLocaliserBase
 from util import rotateQuaternion, getHeading
 
 import random
@@ -21,8 +20,8 @@ class UpdateParticleCloud():
 		global totalWeight
 		global particleWeights
 
-		maxWeight = 1.0
-		totalWeight = 1.0
+		maxWeight = 0.0
+		totalWeight = 0.0
 		
 		particleWeights = []
 		
@@ -34,7 +33,10 @@ class UpdateParticleCloud():
 			
 			if weight > maxWeight:
 				maxWeight = weight
-				listLocation = i
+
+		pf.weights = particleWeights		
+		pf.maxWeight = maxWeight
+		pf.totalWeight = totalWeight
 
 	#Updates particles according to MCL
 	def update_non_amcl(self, scan, pf):
@@ -99,35 +101,22 @@ class UpdateParticleCloud():
 	#Updates particles according to AMCL
 	def update_amcl(self, scan, pf):
 
+		self.weight_amcl(scan, pf)
+
+		resampledPoses = self.resample(pf.particlecloud.poses, pf.weights, pf.totalWeight)
+	
+		return self.smudge_amcl(resampledPoses)
+
+	def weight_amcl(self, scan, pf):
 		self.weight_particles(scan, pf)
 
-		numParticles = len(pf.particlecloud.poses)
-
-		rospy.loginfo(maxWeight)
-
-		#if the maximum weighted particle has a weight below 10 reinitialise the particles
-		if maxWeight < 7:
-
+		#if the maximum weighted particle has a weight below 7 reinitialise the particles
+		if pf.maxWeight < 6:
 			pf.particlecloud = pf.reinitialise_cloud(pf.estimatedpose.pose.pose, 3.0, True)
 			self.weight_particles(scan, pf)
-			numParticles = len(pf.particlecloud.poses)
 
-			
-		resampledPoses = []
-		index = 0
-		notAccepted = True
-	
-		#Resample the poses
-		for i in range(0,numParticles):
-			notAccepted = True
-			while (notAccepted):
-				index = random.randint(0,numParticles-1)
-				posX = pf.particlecloud.poses[index].position.x
-				posY = pf.particlecloud.poses[index].position.y
-				if (random.uniform(0,1) < particleWeights[index]/totalWeight):
-					notAccepted = False
-			resampledPoses.append(pf.particlecloud.poses[index])
-	
+	def smudge_amcl(self, resampledPoses):
+				
 		cont = True
 		pArray = PoseArray()
 		temp = []
@@ -169,3 +158,23 @@ class UpdateParticleCloud():
 					pArray.poses.append(val)
 
 		return pArray
+
+	def resample(self, particles, particleWeights, tWeight):
+		numParticles = len(particles)
+			
+		resampledPoses = []
+		index = 0
+		notAccepted = True
+	
+		#Resample the poses
+		for i in range(0,numParticles):
+			notAccepted = True
+			while (notAccepted):
+				index = random.randint(0,numParticles-1)
+				particle = particles[index]
+				posX = particle.position.x
+				posY = particle.position.y
+				if (random.uniform(0,1) < particleWeights[index]/tWeight):
+					notAccepted = False
+			resampledPoses.append(particle)
+		return resampledPoses

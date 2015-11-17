@@ -3,7 +3,6 @@ import math
 import rospy
 
 from geometry_msgs.msg import Pose, PoseArray, Quaternion
-from pf_base import PFLocaliserBase
 from util import rotateQuaternion, getHeading
 from dbscan import DBScan
 
