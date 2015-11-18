@@ -77,9 +77,10 @@ class ParticleFilterLocalisationNode(object):
                                                      queue_size=1)
 
 		register = Registration()
-		register.numParticles = self.numParticles
 		register.frame_id = map_topic
 		register.toAdd = True
+		register.resolution = self._particle_filter.occupancy_map.info.resolution
+		register.freePoints = self._particle_filter.listFreePoints
 		self._registration_publisher.publish(register)
 
 

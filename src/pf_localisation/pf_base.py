@@ -139,7 +139,7 @@ class PFLocaliserBase(object):
 	    pWeights.array = self.weights
 	    pWeights.maxWeight = self.maxWeight
 	    pWeights.totalWeight = self.totalWeight
-	    rospy.loginfo("SENDING")
+	    rospy.loginfo("SENDING FROM: " + map_topic)
 	    self._weighted_particle_publisher.publish(pWeights)
 
 	    resampledParticles = []

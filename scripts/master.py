@@ -35,35 +35,39 @@ class Node(object):
 				pos = i
 
 		if nFound and reg.toAdd:
-			self.registered.append(reg.frame_id)
+			self.registered.append(reg)
 			rospy.loginfo("\tREGISTERED: " + reg.frame_id)
+			self.updater.mapInfo = self.registered
 		elif not nFound and not reg.toAdd:
 			del self.registered[pos]
 			rospy.loginfo("\tDEREGISTERED: " + reg.frame_id)
 
 	def addParticles(self, wParticles):
 		name = wParticles.poseArray.header.frame_id
-		rospy.loginfo("\tRECEIVED: " + name)
 		toAdd = False
-		for i in range(0, len(self.registered)):
-			if self.registered[i] == name:
-				toAdd == True
-		if toAdd:
+		posReg = None
+		for i in range(0, len(self.registered)):			
+			if self.registered[i].frame_id == name:
+				toAdd = True
+				posReg = i
+		if not toAdd:
+			print("NOT FOUND IN REGISTERED")
 			return
-
+		print("FOUND IN REGISTERED")
 		toAdd = True
 		for i in range(0, len(self.particlesAdded)):
-			if self.particlesAdded[i] == name:
+			if self.particlesAdded[i][0] == name:
 				toAdd = False
 		if not toAdd:
 			return
+		rospy.loginfo("\tRECEIVED: " + name)
 
 		for i in range(0, len(wParticles.poseArray.poses)):
 			newWT = (name, wParticles.poseArray.poses[i], wParticles.array[i])
 			self.particleWT.append(newWT)
 
 		self.totalWeight = wParticles.totalWeight
-		self.particlesAdded.append(name)
+		self.particlesAdded.append((name, self.registered[posReg].freePoints, self.registered[posReg].resolution))
 
 		if len(self.particlesAdded) == len(self.registered):
 			self.resample()
@@ -71,11 +75,11 @@ class Node(object):
 		
 
 	def resample(self):
-		particles = self.updater.resample(self.particleWT, self.totalWeight)
+		particles = self.updater.resample(self.particleWT, self.totalWeight, self.particlesAdded)
 		toSend = []
 		for i in range(0, len(self.registered)):
 			toAdd = []
-			toAdd.append(self.registered[i])
+			toAdd.append(self.registered[i].frame_id)
 			toSend.append(toAdd)
 
 		for i in range (0, len(particles)):
