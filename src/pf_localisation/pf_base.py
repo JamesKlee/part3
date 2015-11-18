@@ -143,10 +143,11 @@ class PFLocaliserBase(object):
 	    self._weighted_particle_publisher.publish(pWeights)
 
 	    resampledParticles = []
+
 	    loop = True
 	    while loop:
 		    try:
-		    	pArray = rospy.wait_for_message("/updatedCloud", PoseArray, 0.5)
+		   	pArray = rospy.wait_for_message("/updatedCloud", PoseArray, 2)
 			rospy.loginfo("\tRECEIVED MESSAGE TO: " + pArray.header.frame_id)
 			if pArray.header.frame_id == map_topic:
 				loop = False

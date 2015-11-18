@@ -111,7 +111,7 @@ class UpdateParticleCloud():
 		self.weight_particles(scan, pf)
 
 		#if the maximum weighted particle has a weight below 7 reinitialise the particles
-		if pf.maxWeight < 6:
+		if pf.maxWeight < 7:
 			pf.particlecloud = pf.reinitialise_cloud(pf.estimatedpose.pose.pose, 3.0, True)
 			self.weight_particles(scan, pf)
 
@@ -159,8 +159,11 @@ class UpdateParticleCloud():
 
 		return pArray
 
-	def resample(self, particles, particleWeights, tWeight):
-		numParticles = len(particles)
+	def resample(self, particleWT, tWeight):
+		#particleWT[i][0] is the map_topic associated with the particle
+		#particleWT[i][1] is the particle
+		#particleWT[i][2] is the weight associated with the particle 
+		numParticles = len(particleWT)
 			
 		resampledPoses = []
 		index = 0
@@ -171,10 +174,9 @@ class UpdateParticleCloud():
 			notAccepted = True
 			while (notAccepted):
 				index = random.randint(0,numParticles-1)
-				particle = particles[index]
-				posX = particle.position.x
-				posY = particle.position.y
-				if (random.uniform(0,1) < particleWeights[index]/tWeight):
+				particle = particleWT[index]
+				if (random.uniform(0,1) < particle[2]/tWeight):
 					notAccepted = False
-			resampledPoses.append(particle)
+			resampledPose = (particle[0], particle[1])
+			resampledPoses.append(resampledPose)
 		return resampledPoses
