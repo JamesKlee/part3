@@ -181,126 +181,72 @@ class UpdateParticleCloud():
 
 	#Updates particles according to KLD-AMCL
 	def update_kld_amcl(self, scan, pf):
-
 		self.weight_particles(scan, pf)
 
 		numParticles = len(pf.particlecloud.poses)
 
 		rospy.loginfo(maxWeight)
 
-		#if the maximum weighted particle has a weight below 10 reinitialise the particles
+		#if the maximum weighted particle has a weight below 7 reinitialise the particles
 		if maxWeight < 7:
 			pf.particlecloud = pf.reinitialise_cloud(pf.estimatedpose.pose.pose, 3.0, True)
 			self.weight_particles(scan, pf)
 			numParticles = len(pf.particlecloud.poses)
 
-
-		resampledPoses = []
 		index = 0
 		notAccepted = True
+		listFreePoints = pf.listFreePoints
+		pArray = PoseArray()
 
 		#Initialize KLD Sampling 	
-		ztable = [i/maxWeight for i in particleWeights]
-		support_samples=0
-		num_samples=0
-		quantile=0.5
-		kld_error = 0.1
-		bin_size = 0.1
-		min_samples=10
-		seed=-1
-		kld_samples = 0
+		zvalue = 1.65
+		bins = [[]]
+		binsSize = 0
+		k = 0 #Number of Bins not empty
+		epsilon = 0.15
+		M = 0
+		Mx=0
+		Mmin = 100
 
-		if (min_samples < self.ABSOLUTE_MIN):
-			kld_samples=self.ABSOLUTE_MIN
-		else:
-			kld_samples=min_samples
-
-		bins = []
-
-		confidence=quantile-0.5; # ztable is from right side of mean
-		confidence=min(0.49998,max(0,confidence))
-
-		max_error = kld_error;
-		bin_size = bin_size; # list of lists
-
-		zvalue=4.1;
-		for i in range(len(ztable)):
-			if(ztable[i] >= confidence):
-				zvalue=i/100.0
-				break
+		#Initialising the bins
+		for i in range(0,len(listFreePoints)):
+			currentCell = listFreePoints[i]
+			cellX = currentCell.x
+			cellY = currentCell.y
+			valueBin = False
+			bins.append([cellX, cellY, valueBin])
+			binsSize += 1
 	
 		#Resample the poses
 		samples = []
+		index = 0
 
-		while (num_samples < min_samples and num_samples < 250) :
-			#Get Sample
+		while (M < Mx or M < Mmin) :
+			#Get Sample 
 			notAccepted = True
+
 			while (notAccepted):
 				index = random.randint(0,numParticles-1)
-				posX = pf.particlecloud.poses[index].position.x
-				posY = pf.particlecloud.poses[index].position.y
 
 				if (random.uniform(0,1) < particleWeights[index]/totalWeight):
 					notAccepted = False
 
 			curr_sample = pf.particlecloud.poses[index]
-			samples.append(curr_sample)
-			num_samples = num_samples+1
-			curr_bin = curr_sample
+			pArray.poses.append(curr_sample)
+			M = M + 1
 
-			if len(bins)==0 or curr_bin not in bins:
-				bins.append(curr_bin);
-				support_samples = support_samples+1
-				if support_samples>=2:
-					k = support_samples-1
-					k=math.ceil(k/(2*max_error)*pow(1-2/(9.0*k)+math.sqrt(2/(9.0*k))*zvalue,3))
-					if k>kld_samples:
-					    kld_samples = k
+			#Convert Coodinates of the Pose to know if the bin is Empty or not
+			xBin = int(curr_sample.position.x / pf.occupancy_map.info.resolution)
+			yBin = int(curr_sample.position.y / pf.occupancy_map.info.resolution)
 
-			min_samples = kld_samples
-			
-	
-		resampledPoses = samples
-		rospy.loginfo("Size Samples = %s"%len(samples))
-		cont = True
-		pArray = PoseArray()
-		temp = []
-		val = Pose()
-		count = 0
-			
-		# TEST this value, rounding scalar
-		scale = 0.66
-	
-		while cont:
-			temp = []
-			val = resampledPoses[0]
-			count = 0
-	
-			for i in range(0, len(resampledPoses)):
-				if (resampledPoses[i] == val):
-					count = count + 1
-				else:
-					temp.append(resampledPoses[i])
-	
-			resampledPoses = temp
-			if (len(resampledPoses) == 0):
-				cont = False
-						
-			# THIS NEEDS TESTS, look at scalar above
-			if (count > 4) and len(resampledPoses) >= 50: #TEST
-				#count = count - 2
-				count = int(count * scale)
-						
-			for i in range(0, count):
-				if i > 0:
-					newPose = Pose()
-					newPose.position.x = random.gauss(val.position.x, 0.3) #TEST THIS
-					newPose.position.y = random.gauss(val.position.y, 0.3) #TEST THIS
-					newPose.orientation = rotateQuaternion(val.orientation, random.vonmisesvariate(0, 4)) #TEST THIS
-					pArray.poses.append(newPose)
-						
-				else:
-					pArray.poses.append(val)
+			for j in range(O, binsSize):
+				currentBin = bins[j]
 
+				if (currentBin[0] == xBin and currentBin[1] == yBin and currentBin[2] == False):
+					currentBin[2] = True
+					k += 1
+
+					if (k > 1):
+						Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
+					break
 		return pArray
-
