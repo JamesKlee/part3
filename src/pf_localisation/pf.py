@@ -10,7 +10,6 @@ from util import rotateQuaternion, getHeading
 import random
 import time
 
-
 class PFLocaliser(PFLocaliserBase):
        
 	def __init__(self, num):

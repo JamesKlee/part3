@@ -27,6 +27,8 @@ import numpy as np
 from threading import Lock
 import time
 import sensor_model
+from clusterTask import ClusterTask
+
 PI_OVER_TWO = math.pi/2 # For faster calculations
 
 class PFLocaliserBase(object):
@@ -46,6 +48,7 @@ class PFLocaliserBase(object):
 	self.maxWeight = 0
 	self.totalWeight = 0
 	self.num = _num
+	self.clusterTask = ClusterTask()
 
 	# Initialise objects
 	self.cloud = UpdateParticleCloud()
@@ -158,6 +161,10 @@ class PFLocaliserBase(object):
 	    self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
             self.particlecloud.header.frame_id = map_topic
             self.estimatedpose.pose.pose = self.estimate_pose()
+            
+            # Publish the estimated pose
+            self.clusterTask.publish(self.estimatedpose.pose.pose, self.estimate.dbscan_largestclustersize())
+            
             currentTime = rospy.Time.now()
             
             # Given new estimated pose, now work out the new transform

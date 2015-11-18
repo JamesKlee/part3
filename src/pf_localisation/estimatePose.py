@@ -38,4 +38,10 @@ class EstimatePose():
 		
 		db.run()
 
-		return db.getguess(pf)
+		guess = db.getguess(pf)
+		self.largestClusterSize = db.largestClusterSize
+			
+		return guess
+		
+	def dbscan_largestclustersize(self):
+		return self.largestClusterSize

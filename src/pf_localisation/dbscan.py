@@ -28,6 +28,7 @@ class DBScan():
         self.minposes = minposes
         self.clusterlist = []
         self.visited = []
+        self.largestClusterSize = 0
 
     # arguments :
     #   eps : float => Max distance with the neighborhood of a Pose
@@ -163,7 +164,10 @@ class DBScan():
         
         # Just return a point if there are no clusters
         if len(clusterInfo) == 0:
+            self.largestClusterSize = 1
             return self.points[0]
+        
+        self.largestClusterSize = largestSize
         
         # A cluster is the largest
         if len(clusterInfo) == 1:
