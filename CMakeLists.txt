@@ -50,6 +50,7 @@ catkin_python_setup()
 add_message_files(
    FILES
    WeightedParticles.msg
+   Cluster.msg
 )
 
 ## Generate services in the 'srv' folder
