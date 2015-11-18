@@ -4,6 +4,8 @@ import rospy
 
 from geometry_msgs.msg import Pose, PoseArray, Quaternion
 from util import rotateQuaternion, getHeading
+from multiprocessing import Pool, Lock, Process
+from functools import partial
 
 import random
 
@@ -12,6 +14,33 @@ class UpdateParticleCloud():
 	totalWeight = 0.0
 	maxWeight = 0.0
 	particleWeights = []
+	
+	def init(l):
+		global lock
+		lock = l
+		
+	def thread_weight(scan, pose)
+		global maxWeight
+		global totalWeight
+		global particleWeights
+		
+		weight = pf.sensor_model.get_weight(scan, pose)
+		
+		if weight > maxWeight:
+			lock.acquire()
+			totalWeight += weight
+			maxWeight = weight
+			
+		else:
+			lock.acquire()
+			totalWeight += weight
+			
+			
+		lock.release()
+				
+		return weight
+		
+		
 	
 	#Weights all of the particles in the particle cloud
 	def weight_particles(self, scan, pf):
@@ -23,18 +52,11 @@ class UpdateParticleCloud():
 		maxWeight = 0.0
 		totalWeight = 0.0
 		
-		particleWeights = []
+		lc = Lock()
+		p = Pool(processes = 8, initializer = init, initargs = (lc,))
 		
 		#Calls the function to weight particles and record max weight and total weight
-		for i in range(0, len(pf.particlecloud.poses)):
-			weight = pf.sensor_model.get_weight(scan, pf.particlecloud.poses[i])
-			particleWeights.append(weight)
-			totalWeight += weight
-			
-			if weight > maxWeight:
-				maxWeight = weight
-
-		print(maxWeight)
+		particleWeights = p.map(partial(thread_weight, scan) pf.particlecloud.poses)
 
 		pf.weights = particleWeights		
 		pf.maxWeight = maxWeight
@@ -113,7 +135,7 @@ class UpdateParticleCloud():
 		self.weight_particles(scan, pf)
 
 		#if the maximum weighted particle has a weight below 7 reinitialise the particles
-		if pf.maxWeight < 8:
+		if pf.maxWeight < 6:
 			pf.particlecloud = pf.reinitialise_cloud(pf.estimatedpose.pose.pose, 3.0, True)
 			self.weight_particles(scan, pf)
 
@@ -161,11 +183,8 @@ class UpdateParticleCloud():
 
 		return pArray
 
-	def resample(self, particleWT, tWeight):
-		#particleWT[i][0] is the map_topic associated with the particle
-		#particleWT[i][1] is the particle
-		#particleWT[i][2] is the weight associated with the particle 
-		numParticles = len(particleWT)
+	def resample(self, particles, particleWeights, tWeight):
+		numParticles = len(particles)
 			
 		resampledPoses = []
 		index = 0
@@ -176,81 +195,136 @@ class UpdateParticleCloud():
 			notAccepted = True
 			while (notAccepted):
 				index = random.randint(0,numParticles-1)
-				particle = particleWT[index]
-				if (random.uniform(0,1) < particle[2]/tWeight):
+				particle = particles[index]
+				posX = particle.position.x
+				posY = particle.position.y
+				if (random.uniform(0,1) < particleWeights[index]/tWeight):
 					notAccepted = False
-			resampledPose = (particle[0], particle[1])
-			resampledPoses.append(resampledPose)
+			resampledPoses.append(particle)
 		return resampledPoses
 
 	#Updates particles according to KLD-AMCL
 	def update_kld_amcl(self, scan, pf):
+
 		self.weight_particles(scan, pf)
 
 		numParticles = len(pf.particlecloud.poses)
 
 		rospy.loginfo(maxWeight)
 
-		#if the maximum weighted particle has a weight below 7 reinitialise the particles
+		#if the maximum weighted particle has a weight below 10 reinitialise the particles
 		if maxWeight < 7:
 			pf.particlecloud = pf.reinitialise_cloud(pf.estimatedpose.pose.pose, 3.0, True)
 			self.weight_particles(scan, pf)
 			numParticles = len(pf.particlecloud.poses)
 
+
+		resampledPoses = []
 		index = 0
 		notAccepted = True
-		listFreePoints = pf.listFreePoints
-		pArray = PoseArray()
 
 		#Initialize KLD Sampling 	
-		zvalue = 1.65
-		bins = [[]]
-		binsSize = 0
-		k = 0 #Number of Bins not empty
-		epsilon = 0.15
-		M = 0
-		Mx=0
-		Mmin = 100
+		ztable = [i/maxWeight for i in particleWeights]
+		support_samples=0
+		num_samples=0
+		quantile=0.5
+		kld_error = 0.1
+		bin_size = 0.1
+		min_samples=10
+		seed=-1
+		kld_samples = 0
 
-		#Initialising the bins
-		for i in range(0,len(listFreePoints)):
-			currentCell = listFreePoints[i]
-			cellX = currentCell.x
-			cellY = currentCell.y
-			valueBin = False
-			bins.append([cellX, cellY, valueBin])
-			binsSize += 1
+		if (min_samples < self.ABSOLUTE_MIN):
+			kld_samples=self.ABSOLUTE_MIN
+		else:
+			kld_samples=min_samples
+
+		bins = []
+
+		confidence=quantile-0.5; # ztable is from right side of mean
+		confidence=min(0.49998,max(0,confidence))
+
+		max_error = kld_error;
+		bin_size = bin_size; # list of lists
+
+		zvalue=4.1;
+		for i in range(len(ztable)):
+			if(ztable[i] >= confidence):
+				zvalue=i/100.0
+				break
 	
 		#Resample the poses
 		samples = []
-		index = 0
 
-		while (M < Mx or M < Mmin) :
-			#Get Sample 
+		while (num_samples < min_samples and num_samples < 250) :
+			#Get Sample
 			notAccepted = True
-
 			while (notAccepted):
 				index = random.randint(0,numParticles-1)
+				posX = pf.particlecloud.poses[index].position.x
+				posY = pf.particlecloud.poses[index].position.y
 
 				if (random.uniform(0,1) < particleWeights[index]/totalWeight):
 					notAccepted = False
 
 			curr_sample = pf.particlecloud.poses[index]
-			pArray.poses.append(curr_sample)
-			M = M + 1
+			samples.append(curr_sample)
+			num_samples = num_samples+1
+			curr_bin = curr_sample
 
-			#Convert Coodinates of the Pose to know if the bin is Empty or not
-			xBin = int(curr_sample.position.x / pf.occupancy_map.info.resolution)
-			yBin = int(curr_sample.position.y / pf.occupancy_map.info.resolution)
+			if len(bins)==0 or curr_bin not in bins:
+				bins.append(curr_bin);
+				support_samples = support_samples+1
+			if support_samples>=2:
+				k = support_samples-1
+				k=math.ceil(k/(2*max_error)*pow(1-2/(9.0*k)+math.sqrt(2/(9.0*k))*zvalue,3))
+				if k>kld_samples:
+				    kld_samples = k
 
-			for j in range(O, binsSize):
-				currentBin = bins[j]
+			min_samples = kld_samples
+			
+	
+		resampledPoses = samples
+		rospy.loginfo("Size Samples = %s"%len(samples))
+		cont = True
+		pArray = PoseArray()
+		temp = []
+		val = Pose()
+		count = 0
+			
+		# TEST this value, rounding scalar
+		scale = 0.66
+	
+		while cont:
+			temp = []
+			val = resampledPoses[0]
+			count = 0
+	
+			for i in range(0, len(resampledPoses)):
+				if (resampledPoses[i] == val):
+					count = count + 1
+				else:
+					temp.append(resampledPoses[i])
+	
+			resampledPoses = temp
+			if (len(resampledPoses) == 0):
+				cont = False
+						
+			# THIS NEEDS TESTS, look at scalar above
+			if (count > 4) and len(resampledPoses) >= 50: #TEST
+				#count = count - 2
+				count = int(count * scale)
+						
+			for i in range(0, count):
+				if i > 0:
+					newPose = Pose()
+					newPose.position.x = random.gauss(val.position.x, 0.3) #TEST THIS
+					newPose.position.y = random.gauss(val.position.y, 0.3) #TEST THIS
+					newPose.orientation = rotateQuaternion(val.orientation, random.vonmisesvariate(0, 4)) #TEST THIS
+					pArray.poses.append(newPose)
+						
+				else:
+					pArray.poses.append(val)
 
-				if (currentBin[0] == xBin and currentBin[1] == yBin and currentBin[2] == False):
-					currentBin[2] = True
-					k += 1
-
-					if (k > 1):
-						Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
-					break
 		return pArray
+
