@@ -56,7 +56,7 @@ class Node(object):
 		print("FOUND IN REGISTERED")
 		toAdd = True
 		for i in range(0, len(self.particlesAdded)):
-			if self.particlesAdded[i][0] == name:
+			if self.particlesAdded[i] == name:
 				toAdd = False
 		if not toAdd:
 			return
@@ -67,7 +67,7 @@ class Node(object):
 			self.particleWT.append(newWT)
 
 		self.totalWeight = wParticles.totalWeight
-		self.particlesAdded.append((name, self.registered[posReg].freePoints, self.registered[posReg].resolution))
+		self.particlesAdded.append(name)
 
 		if len(self.particlesAdded) == len(self.registered):
 			self.resample()
@@ -75,7 +75,7 @@ class Node(object):
 		
 
 	def resample(self):
-		particles = self.updater.resample(self.particleWT, self.totalWeight, self.particlesAdded)
+		particles = self.updater.resample(self.particleWT, self.totalWeight)
 		toSend = []
 		for i in range(0, len(self.registered)):
 			toAdd = []

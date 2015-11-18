@@ -161,7 +161,7 @@ class UpdateParticleCloud():
 
 		return pArray
 
-	def resample(self, particleWT, tWeight, mapInfo):
+	def resample(self, particleWT, tWeight):
 		#particleWT[i][0] is the map_topic associated with the particle
 		#particleWT[i][1] is the particle
 		#particleWT[i][2] is the weight associated with the particle 
