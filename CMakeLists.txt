@@ -51,6 +51,7 @@ add_message_files(
    FILES
    WeightedParticles.msg
    Cluster.msg
+   Registration.msg
 )
 
 ## Generate services in the 'srv' folder

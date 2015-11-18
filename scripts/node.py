@@ -12,7 +12,7 @@ from pf_localisation.util import *
 
 from geometry_msgs.msg import ( PoseStamped, PoseWithCovarianceStamped,
                                 PoseArray, Quaternion )
-from pf_localisation.msg import WeightedParticles
+from pf_localisation.msg import WeightedParticles, Registration
 
 from tf.msg import tfMessage
 from sensor_msgs.msg import LaserScan
@@ -31,15 +31,21 @@ class ParticleFilterLocalisationNode(object):
     	def __init__(self, _map_topic):
 		global map_topic
 		map_topic = _map_topic
+
+		#PARTICLES
+		self.numParticles = 200
+
+
         	# Minimum change (m/radians) before publishing new particle cloud and pose
         	self._PUBLISH_DELTA = rospy.get_param("publish_delta", 0.1)  
         
-       		self._particle_filter = pf_localisation.pf.PFLocaliser()
+       		self._particle_filter = pf_localisation.pf.PFLocaliser(self.numParticles)
 
         	self._latest_scan = None
         	self._last_published_pose = None
         	self._initial_pose_received = False
 
+		self._registration_publisher = rospy.Publisher("/regNode", Registration)
         	self._pose_publisher = rospy.Publisher("/estimatedpose_" + map_topic, PoseStamped)
         	self._amcl_pose_publisher = rospy.Publisher("/amcl_pose",
                                                     PoseWithCovarianceStamped)
@@ -47,8 +53,6 @@ class ParticleFilterLocalisationNode(object):
         	self._tf_publisher = rospy.Publisher("/tf", tfMessage)
 		self._init_pose_publisher = rospy.Publisher("/initialpose",
                                                     PoseWithCovarianceStamped)
-		self._weighted_particle_publisher = rospy.Publisher("/weightedParticles",
-                                                    WeightedParticles)
 
         	rospy.loginfo("Waiting for a map...")
         	try:
@@ -72,6 +76,12 @@ class ParticleFilterLocalisationNode(object):
                                                      self._odometry_callback,
                                                      queue_size=1)
 
+		register = Registration()
+		register.numParticles = self.numParticles
+		register.frame_id = map_topic
+		register.toAdd = True
+		self._registration_publisher.publish(register)
+
 
 	def initialisePose(self):
 		csPose = PoseWithCovarianceStamped()
@@ -79,17 +89,10 @@ class ParticleFilterLocalisationNode(object):
 		csPose.header.stamp = rospy.get_rostime()
 		csPose.header.frame_id = map_topic #TO CHANGE
 		csPose.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.06853891945200942]
-		if map_topic == "map":
-			x = 20
-			y = 19
-		else:
-			x = 12
-			y = 8
 		
-		csPose.pose.pose.position.x = x
-		csPose.pose.pose.position.y = y
+		csPose.pose.pose.position.x = 0
+		csPose.pose.pose.position.y = 0
 		csPose.pose.pose.orientation = createQuaternion(0)
-
 		self._init_pose_publisher.publish(csPose)
 
     	def _initial_pose_callback(self, pose):
@@ -109,11 +112,11 @@ class ParticleFilterLocalisationNode(object):
         	"""
         	if self._initial_pose_received:
         	    t_odom = self._particle_filter.predict_from_odometry(odometry)
-        	    t_filter = self._particle_filter.update_filter(self._latest_scan)
-        	    if t_odom + t_filter > 0.1:
-        	        rospy.logwarn("Filter cycle overran timeslot")
-        	        rospy.loginfo("Odometry update: %fs"%t_odom)
-        	        rospy.loginfo("Particle update: %fs"%t_filter)
+        	    t_filter = self._particle_filter.update_filter(self._latest_scan, map_topic, self.numParticles)
+        	    #if t_odom + t_filter > 0.1:
+        	     #   rospy.logwarn("Filter cycle overran timeslot")
+        	      #  rospy.loginfo("Odometry update: %fs"%t_odom)
+        	       # rospy.loginfo("Particle update: %fs"%t_filter)
 
 	def _laser_callback(self, scan):
         	"""
@@ -139,16 +142,6 @@ class ParticleFilterLocalisationNode(object):
         
                 	# Get updated transform and publish it
                 	self._tf_publisher.publish(self._particle_filter.tf_message)
-
-			# Get particle cloud and weights and publish it 
-			pWeights = WeightedParticles()
-			pWeights.poseArray.header.seq = 1
-			pWeights.poseArray.header.stamp = rospy.get_rostime()
-			pWeights.poseArray.header.frame_id = map_topic
-			pWeights.poseArray.poses = self._particle_filter.particlecloud.poses
-			pWeights.array = self._particle_filter.weights
-
-			self._weighted_particle_publisher.publish(pWeights)
 
     	def _sufficientMovementDetected(self, latest_pose):
         	"""

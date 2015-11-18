@@ -13,9 +13,14 @@ from geometry_msgs.msg import (PoseWithCovarianceStamped, PoseArray,
 from tf.msg import tfMessage
 from tf import transformations
 from nav_msgs.msg import OccupancyGrid
+from pf_localisation.msg import WeightedParticles, Registration
+from updateParticle import UpdateParticleCloud
+from estimatePose import EstimatePose
+from initialise import InitialiseCloud
 
 import math
 import random
+import sys
 import numpy as np
 from util import rotateQuaternion, getHeading
 import numpy as np
@@ -31,13 +36,25 @@ class PFLocaliserBase(object):
     INIT_Z = 0 			# Initial z location of robot (metres)
     INIT_HEADING = 0 	# Initial orientation of robot (radians)
     
-    def __init__(self):
+    def __init__(self, _num):
         # Initialise fields
         self.estimatedpose =  PoseWithCovarianceStamped()
         self.occupancy_map = OccupancyGrid()
         self.particlecloud =  PoseArray()
         self.tf_message = tfMessage()
 	self.weights = []
+	self.maxWeight = 0
+	self.totalWeight = 0
+	self.num = _num
+
+	# Initialise objects
+	self.cloud = UpdateParticleCloud()
+	self.estimate = EstimatePose()
+	self.init = InitialiseCloud()
+
+	self._weighted_particle_publisher = rospy.Publisher("/weightedParticles",
+                                                    WeightedParticles)
+	self._registration_publisher = rospy.Publisher("/regNode", Registration)
         
         self._update_lock =  Lock()
         
@@ -87,7 +104,7 @@ class PFLocaliserBase(object):
         """
         raise NotImplementedError()
 
-    def update_filter(self, scan):
+    def update_filter(self, scan, map_topic, numParticles):
         """
         Called whenever there is a new LaserScan message.
         This calls update methods (implemented by subclass) to do actual
@@ -108,8 +125,37 @@ class PFLocaliserBase(object):
         with self._update_lock:
             t = time.time()
             # Call user-implemented particle filter update method
-            self.update_particle_cloud(scan)
-            self.particlecloud.header.frame_id = "/map"
+            #self.update_particle_cloud(scan)
+            
+	    #SERVER CODE
+            self.cloud.weight_amcl(scan, self)
+
+	    # Get particle cloud and weights and publish it 
+	    pWeights = WeightedParticles()
+	    pWeights.poseArray.header.seq = 1
+	    pWeights.poseArray.header.stamp = rospy.get_rostime()
+	    pWeights.poseArray.header.frame_id = map_topic
+	    pWeights.poseArray.poses = self.particlecloud.poses
+	    pWeights.array = self.weights
+	    pWeights.maxWeight = self.maxWeight
+	    pWeights.totalWeight = self.totalWeight
+	    rospy.loginfo("SENDING")
+	    self._weighted_particle_publisher.publish(pWeights)
+
+	    resampledParticles = []
+	    loop = True
+	    while loop:
+		    try:
+		    	pArray = rospy.wait_for_message("/updatedCloud", PoseArray, 0.5)
+			rospy.loginfo("\tRECEIVED MESSAGE TO: " + pArray.header.frame_id)
+			if pArray.header.frame_id == map_topic:
+				loop = False
+				resampledParticles = pArray.poses
+		    except:
+		    	self._weighted_particle_publisher.publish(pWeights)
+
+	    self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
+            self.particlecloud.header.frame_id = map_topic
             self.estimatedpose.pose.pose = self.estimate_pose()
             currentTime = rospy.Time.now()
             
@@ -291,12 +337,12 @@ class PFLocaliserBase(object):
 	i = 0
 	occupancyData = self.occupancy_map.data
 
-	for w in range(0, self.occupancy_map.info.width):
-		for h in range(0, self.occupancy_map.info.height):
-			if (occupancyData[i] >= 0.0 and occupancyData[i] <= 19.6) :
+	for h in range(0, self.occupancy_map.info.height):
+		for w in range(0, self.occupancy_map.info.width):			
+			if (occupancyData[i] >= 0.0) :
 				point = Point()
-				point.x = h
-				point.y = w
+				point.x = w
+				point.y = h
 				point.z = 0
 				self.listFreePoints.append(point)
 			i += 1

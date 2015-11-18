@@ -4,7 +4,6 @@ import rospy
 import random
 
 from geometry_msgs.msg import Pose, PoseArray, Quaternion
-from pf_base import PFLocaliserBase
 from util import rotateQuaternion, getHeading
 
 class InitialiseCloud():
@@ -66,10 +65,8 @@ class InitialiseCloud():
 		listFreePoints = pf.listFreePoints
 
 		for m in range(0, numParticles):
-			xNewPose = -1
-			yNewPose = -1
 
-			randUninform = int(random.uniform(0,len(listFreePoints)))
+			randUninform = int(random.uniform(0,len(listFreePoints)-1))
 			coordinates = listFreePoints[randUninform]
 			xNewPose = coordinates.x * pf.occupancy_map.info.resolution
 			yNewPose = coordinates.y * pf.occupancy_map.info.resolution
@@ -78,10 +75,6 @@ class InitialiseCloud():
 			newPose  = Pose()
 			newPose.position.x = xNewPose
 			newPose.position.y = yNewPose
-			newPose.orientation = None
-
-			#Different orientations assigned for different tests/situations
-			newPose.orientation = rotateQuaternion(initialpose.orientation, random.vonmisesvariate(0, 4))
-
+			newPose.orientation = rotateQuaternion(initialpose.orientation, random.uniform(-math.pi, math.pi))
 			poseArray.poses.append(newPose)
 		return poseArray
