@@ -182,3 +182,75 @@ class UpdateParticleCloud():
 			resampledPose = (particle[0], particle[1])
 			resampledPoses.append(resampledPose)
 		return resampledPoses
+
+	#Updates particles according to KLD-AMCL
+	def update_kld_amcl(self, scan, pf):
+		self.weight_particles(scan, pf)
+
+		numParticles = len(pf.particlecloud.poses)
+
+		rospy.loginfo(maxWeight)
+
+		#if the maximum weighted particle has a weight below 7 reinitialise the particles
+		if maxWeight < 7:
+			pf.particlecloud = pf.reinitialise_cloud(pf.estimatedpose.pose.pose, 3.0, True)
+			self.weight_particles(scan, pf)
+			numParticles = len(pf.particlecloud.poses)
+
+		index = 0
+		notAccepted = True
+		listFreePoints = pf.listFreePoints
+		pArray = PoseArray()
+
+		#Initialize KLD Sampling 	
+		zvalue = 1.65
+		bins = [[]]
+		binsSize = 0
+		k = 0 #Number of Bins not empty
+		epsilon = 0.15
+		M = 0
+		Mx=0
+		Mmin = 100
+
+		#Initialising the bins
+		for i in range(0,len(listFreePoints)):
+			currentCell = listFreePoints[i]
+			cellX = currentCell.x
+			cellY = currentCell.y
+			valueBin = False
+			bins.append([cellX, cellY, valueBin])
+			binsSize += 1
+	
+		#Resample the poses
+		samples = []
+		index = 0
+
+		while (M < Mx or M < Mmin) :
+			#Get Sample 
+			notAccepted = True
+
+			while (notAccepted):
+				index = random.randint(0,numParticles-1)
+
+				if (random.uniform(0,1) < particleWeights[index]/totalWeight):
+					notAccepted = False
+
+			curr_sample = pf.particlecloud.poses[index]
+			pArray.poses.append(curr_sample)
+			M = M + 1
+
+			#Convert Coodinates of the Pose to know if the bin is Empty or not
+			xBin = int(curr_sample.position.x / pf.occupancy_map.info.resolution)
+			yBin = int(curr_sample.position.y / pf.occupancy_map.info.resolution)
+
+			for j in range(O, binsSize):
+				currentBin = bins[j]
+
+				if (currentBin[0] == xBin and currentBin[1] == yBin and currentBin[2] == False):
+					currentBin[2] = True
+					k += 1
+
+					if (k > 1):
+						Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
+					break
+		return pArray
