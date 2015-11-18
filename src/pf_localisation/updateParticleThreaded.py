@@ -4,6 +4,8 @@ import rospy
 
 from geometry_msgs.msg import Pose, PoseArray, Quaternion
 from util import rotateQuaternion, getHeading
+from multiprocessing import Pool, Lock, Process
+from functools import partial
 
 import random
 
@@ -12,6 +14,33 @@ class UpdateParticleCloud():
 	totalWeight = 0.0
 	maxWeight = 0.0
 	particleWeights = []
+	
+	def init(l):
+		global lock
+		lock = l
+		
+	def thread_weight(scan, pose)
+		global maxWeight
+		global totalWeight
+		global particleWeights
+		
+		weight = pf.sensor_model.get_weight(scan, pose)
+		
+		if weight > maxWeight:
+			lock.acquire()
+			totalWeight += weight
+			maxWeight = weight
+			
+		else:
+			lock.acquire()
+			totalWeight += weight
+			
+			
+		lock.release()
+				
+		return weight
+		
+		
 	
 	#Weights all of the particles in the particle cloud
 	def weight_particles(self, scan, pf):
@@ -23,16 +52,11 @@ class UpdateParticleCloud():
 		maxWeight = 0.0
 		totalWeight = 0.0
 		
-		particleWeights = []
+		lc = Lock()
+		p = Pool(processes = 8, initializer = init, initargs = (lc,))
 		
 		#Calls the function to weight particles and record max weight and total weight
-		for i in range(0, len(pf.particlecloud.poses)):
-			weight = pf.sensor_model.get_weight(scan, pf.particlecloud.poses[i])
-			particleWeights.append(weight)
-			totalWeight += weight
-			
-			if weight > maxWeight:
-				maxWeight = weight
+		particleWeights = p.map(partial(thread_weight, scan) pf.particlecloud.poses)
 
 		pf.weights = particleWeights		
 		pf.maxWeight = maxWeight
@@ -111,7 +135,7 @@ class UpdateParticleCloud():
 		self.weight_particles(scan, pf)
 
 		#if the maximum weighted particle has a weight below 7 reinitialise the particles
-		if pf.maxWeight < 7:
+		if pf.maxWeight < 6:
 			pf.particlecloud = pf.reinitialise_cloud(pf.estimatedpose.pose.pose, 3.0, True)
 			self.weight_particles(scan, pf)
 
@@ -159,11 +183,8 @@ class UpdateParticleCloud():
 
 		return pArray
 
-	def resample(self, particleWT, tWeight):
-		#particleWT[i][0] is the map_topic associated with the particle
-		#particleWT[i][1] is the particle
-		#particleWT[i][2] is the weight associated with the particle 
-		numParticles = len(particleWT)
+	def resample(self, particles, particleWeights, tWeight):
+		numParticles = len(particles)
 			
 		resampledPoses = []
 		index = 0
@@ -174,11 +195,12 @@ class UpdateParticleCloud():
 			notAccepted = True
 			while (notAccepted):
 				index = random.randint(0,numParticles-1)
-				particle = particleWT[index]
-				if (random.uniform(0,1) < particle[2]/tWeight):
+				particle = particles[index]
+				posX = particle.position.x
+				posY = particle.position.y
+				if (random.uniform(0,1) < particleWeights[index]/tWeight):
 					notAccepted = False
-			resampledPose = (particle[0], particle[1])
-			resampledPoses.append(resampledPose)
+			resampledPoses.append(particle)
 		return resampledPoses
 
 	#Updates particles according to KLD-AMCL
@@ -253,11 +275,11 @@ class UpdateParticleCloud():
 			if len(bins)==0 or curr_bin not in bins:
 				bins.append(curr_bin);
 				support_samples = support_samples+1
-				if support_samples>=2:
-					k = support_samples-1
-					k=math.ceil(k/(2*max_error)*pow(1-2/(9.0*k)+math.sqrt(2/(9.0*k))*zvalue,3))
-					if k>kld_samples:
-					    kld_samples = k
+			if support_samples>=2:
+				k = support_samples-1
+				k=math.ceil(k/(2*max_error)*pow(1-2/(9.0*k)+math.sqrt(2/(9.0*k))*zvalue,3))
+				if k>kld_samples:
+				    kld_samples = k
 
 			min_samples = kld_samples
 			

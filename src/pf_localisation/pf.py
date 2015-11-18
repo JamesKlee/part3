@@ -19,9 +19,9 @@ class PFLocaliser(PFLocaliserBase):
 		super(PFLocaliser, self).__init__(num)
 
 		# Set motion model parameters
-		self.ODOM_ROTATION_NOISE = 0.064
-		self.ODOM_TRANSLATION_NOISE = 1.006
-		self.ODOM_DRIFT_NOISE = 0.086
+		self.ODOM_ROTATION_NOISE = 0#0.064
+		self.ODOM_TRANSLATION_NOISE = 0#1.006
+		self.ODOM_DRIFT_NOISE = 0#0.086
 
 	#Updates the particle 
 	def update_particle_cloud(self, scan):
