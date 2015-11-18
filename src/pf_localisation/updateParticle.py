@@ -251,11 +251,11 @@ class UpdateParticleCloud():
 			if len(bins)==0 or curr_bin not in bins:
 				bins.append(curr_bin);
 				support_samples = support_samples+1
-			if support_samples>=2:
-				k = support_samples-1
-				k=math.ceil(k/(2*max_error)*pow(1-2/(9.0*k)+math.sqrt(2/(9.0*k))*zvalue,3))
-				if k>kld_samples:
-				    kld_samples = k
+				if support_samples>=2:
+					k = support_samples-1
+					k=math.ceil(k/(2*max_error)*pow(1-2/(9.0*k)+math.sqrt(2/(9.0*k))*zvalue,3))
+					if k>kld_samples:
+					    kld_samples = k
 
 			min_samples = kld_samples
 			
