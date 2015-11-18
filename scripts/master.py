@@ -71,7 +71,6 @@ class Node(object):
 		
 
 	def resample(self):
-		print("ENTERED RESAMPLE")
 		particles = self.updater.resample(self.particleWT, self.totalWeight)
 		toSend = []
 		for i in range(0, len(self.registered)):
