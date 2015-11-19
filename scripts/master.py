@@ -99,7 +99,7 @@ class Node(object):
 
 		for i in range(0, len(toSend)):
 			name = toSend[i][0]
-			if len(toSend[i]) == 0:
+			if len(toSend[i]) <= 1:
 				list = []
 			else:
 				list = toSend[i]
