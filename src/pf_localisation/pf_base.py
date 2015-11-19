@@ -167,7 +167,10 @@ class PFLocaliserBase(object):
             self.estimatedpose.pose.pose = self.estimate_pose()
             
             # Publish the estimated pose
-            self.clusterTask.publish(self.estimatedpose.pose.pose, self.estimate.dbscan_largestclustersize())
+            floorName = "BASEMENT?"
+            estimatedPose = self.estimatedpose.pose.pose
+            largestClusterSize = self.estimate.dbscan_largestclustersize()
+            self.clusterTask.publish(floorName, estimatedPose, largestClusterSize)
             
             currentTime = rospy.Time.now()
             
