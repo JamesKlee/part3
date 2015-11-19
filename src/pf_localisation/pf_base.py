@@ -131,7 +131,7 @@ class PFLocaliserBase(object):
             #self.update_particle_cloud(scan)
             
 	    #SERVER CODE
-            self.cloud.weight_amcl(scan, self)
+            self.cloud.weight_kld(scan, self)
 
 	    # Get particle cloud and weights and publish it 
 	    pWeights = WeightedParticles()
@@ -142,7 +142,7 @@ class PFLocaliserBase(object):
 	    pWeights.array = self.weights
 	    pWeights.maxWeight = self.maxWeight
 	    pWeights.totalWeight = self.totalWeight
-	    rospy.loginfo("SENDING")
+	    rospy.loginfo("SENDING FROM: " + map_topic)
 	    self._weighted_particle_publisher.publish(pWeights)
 
 	    resampledParticles = []
@@ -157,8 +157,11 @@ class PFLocaliserBase(object):
 				resampledParticles = pArray.poses
 		    except:
 		    	self._weighted_particle_publisher.publish(pWeights)
-
+		
 	    self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
+	    #particles = PoseArray()
+	    #particles.poses = resampledParticles
+	    #self.particlecloud = particles
 	    
             self.particlecloud.header.frame_id = map_topic
             self.estimatedpose.pose.pose = self.estimate_pose()

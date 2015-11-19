@@ -1,3 +1,4 @@
 string frame_id
-uint64 numParticles
+geometry_msgs/Point[] freePoints
+float64 resolution
 bool toAdd
