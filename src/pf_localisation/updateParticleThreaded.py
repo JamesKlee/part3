@@ -7,6 +7,7 @@ from util import rotateQuaternion, getHeading
 from multiprocessing import Pool, Lock, Process
 from functools import partial
 
+import weightParticle
 import random
 
 class UpdateParticleCloud():
@@ -14,53 +15,24 @@ class UpdateParticleCloud():
 	totalWeight = 0.0
 	maxWeight = 0.0
 	particleWeights = []
-	
-	def init(l):
-		global lock
-		lock = l
 		
-	def thread_weight(scan, pose)
-		global maxWeight
-		global totalWeight
-		global particleWeights
-		
-		weight = pf.sensor_model.get_weight(scan, pose)
-		
-		if weight > maxWeight:
-			lock.acquire()
-			totalWeight += weight
-			maxWeight = weight
-			
-		else:
-			lock.acquire()
-			totalWeight += weight
-			
-			
-		lock.release()
-				
-		return weight
-		
-		
-	
 	#Weights all of the particles in the particle cloud
 	def weight_particles(self, scan, pf):
 
-		global maxWeight
-		global totalWeight
-		global particleWeights
+#		global maxWeight
+#		global totalWeight
+#		global particleWeights
 
-		maxWeight = 0.0
-		totalWeight = 0.0
-		
-		lc = Lock()
-		p = Pool(processes = 8, initializer = init, initargs = (lc,))
+#		maxWeight = 0.0
+#		totalWeight = 0.0
 		
 		#Calls the function to weight particles and record max weight and total weight
-		particleWeights = p.map(partial(thread_weight, scan) pf.particlecloud.poses)
+		doneWeight = weightParticle(scan, pf, pf.particlecloud.poses)
+		
 
-		pf.weights = particleWeights		
-		pf.maxWeight = maxWeight
-		pf.totalWeight = totalWeight
+		pf.weights = doneWeight.particleWeights		
+		pf.maxWeight = doneWeight.maximumWeight
+		pf.totalWeight = doneWeight.totalWeight
 
 	#Updates particles according to MCL
 	def update_non_amcl(self, scan, pf):
