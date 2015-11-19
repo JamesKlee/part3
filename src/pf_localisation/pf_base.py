@@ -38,7 +38,7 @@ class PFLocaliserBase(object):
     INIT_Z = 0 			# Initial z location of robot (metres)
     INIT_HEADING = 0 	# Initial orientation of robot (radians)
     
-    def __init__(self, _num):
+    def __init__(self, _num, _map_topic):
         # Initialise fields
         self.estimatedpose =  PoseWithCovarianceStamped()
         self.occupancy_map = OccupancyGrid()
@@ -49,6 +49,7 @@ class PFLocaliserBase(object):
 	self.totalWeight = 0
 	self.num = _num
 	self.clusterTask = ClusterTask()
+	self.floorName = _map_topic
 
 	# Initialise objects
 	self.cloud = UpdateParticleCloud()
@@ -166,7 +167,7 @@ class PFLocaliserBase(object):
             self.estimatedpose.pose.pose = self.estimate_pose()
             
             # Publish the estimated pose
-            floorName = "BASEMENT?"
+            floorName = self.floorName
             estimatedPose = self.estimatedpose.pose.pose
             largestClusterSize = self.estimate.dbscan_largestclustersize()
             self.clusterTask.publish(floorName, estimatedPose, largestClusterSize)

@@ -39,7 +39,7 @@ class ParticleFilterLocalisationNode(object):
         	# Minimum change (m/radians) before publishing new particle cloud and pose
         	self._PUBLISH_DELTA = rospy.get_param("publish_delta", 0.1)  
         
-       		self._particle_filter = pf_localisation.pf.PFLocaliser(self.numParticles)
+       		self._particle_filter = pf_localisation.pf.PFLocaliser(self.numParticles, map_topic)
 
         	self._latest_scan = None
         	self._last_published_pose = None
