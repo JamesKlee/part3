@@ -208,7 +208,7 @@ class UpdateParticleCloud():
 		index = 0
 		notAccepted = True
 		listFreePoints = []
-		pArray = PoseArray()
+		resampledPoses = []
 
 		#Initialize KLD Sampling 	
 		zvalue = 1.65
@@ -246,19 +246,19 @@ class UpdateParticleCloud():
 					notAccepted = False
 
 			curr_sample = (particle[0], particle[1])
-			pArray.poses.append(curr_sample)
+			resampledPoses.append(curr_sample)
 			M = M + 1
 
 			#Convert Coodinates of the Pose to know if the bin is Empty or not
-			for i in range(0,self.mapInfo) :
+			for i in range(0,len(self.mapInfo)) :
 				if (particle[0] == self.mapInfo[i][0]):
 				 	mapResolution = self.mapInfo[i][2]
-					xBin = int(curr_sample.position.x / mapResolution)
-					yBin = int(curr_sample.position.y / mapResolution)
+					xBin = int(curr_sample[1].position.x / mapResolution)
+					yBin = int(curr_sample[1].position.y / mapResolution)
 					break
 
-			for j in range(O, binsSize):
-				currentBin = bins[j]
+			for k in range(0, binsSize):
+				#currentBin = bins[k]
 
 				if ((curr_sample[0], xBin, yBin) in binsDict):
 					if (binsDict[(curr_sample[0], xBin, yBin)] == False):
@@ -275,4 +275,4 @@ class UpdateParticleCloud():
 					if (k > 1):
 						Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
 					break"""
-		return pArray
+		return resampledPoses
