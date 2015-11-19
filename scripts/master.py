@@ -47,7 +47,10 @@ class Node(object):
 		self.lock.release()
 
 	def addParticles(self, wParticles):
-		self.lock.acquire()
+		if self.lock.locked():
+			return
+		else:
+			self.lock.acquire()
 		name = wParticles.poseArray.header.frame_id
 		toAdd = False
 		posReg = None
@@ -98,6 +101,7 @@ class Node(object):
 					toSend[j].append(particle[1])
 
 		for i in range(0, len(toSend)):
+			time.sleep(0.075)
 			name = toSend[i][0]
 			if len(toSend[i]) <= 1:
 				list = []
@@ -105,7 +109,6 @@ class Node(object):
 				list = toSend[i]
 				del list[0]
 			self.send(name,list)
-			time.sleep(0.075)
 
 		self.particleWT = []
 		self.particlesAdded = []
