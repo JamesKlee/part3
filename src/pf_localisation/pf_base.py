@@ -154,9 +154,11 @@ class PFLocaliserBase(object):
 				resampledParticles = pArray.poses
 		    except:
 		    	self._weighted_particle_publisher.publish(pWeights)
-
-	    #self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
-	    self.particlecloud = resampledParticles
+		
+	    self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
+	    #particles = PoseArray()
+	    #particles.poses = resampledParticles
+	    #self.particlecloud = particles
 	    
             self.particlecloud.header.frame_id = map_topic
             self.estimatedpose.pose.pose = self.estimate_pose()
