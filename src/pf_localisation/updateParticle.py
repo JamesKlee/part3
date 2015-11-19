@@ -109,6 +109,15 @@ class UpdateParticleCloud():
 	
 		return self.smudge_amcl(resampledPoses)
 
+	#Updates particles according to KLD-AMCL
+	def update_kld_amcl(self, scan, pf):
+
+		self.weight_kld(scan, pf)
+
+		resampledPoses = self.resample_kld(pf.particlecloud.poses, pf.weights, pf.totalWeight)
+	
+		return self.smudge_amcl(resampledPoses)
+
 	def weight_amcl(self, scan, pf):
 		self.weight_particles(scan, pf)
 
@@ -116,6 +125,9 @@ class UpdateParticleCloud():
 		if pf.maxWeight < 8:
 			pf.particlecloud = pf.reinitialise_cloud(pf.estimatedpose.pose.pose, 3.0, True)
 			self.weight_particles(scan, pf)
+
+	def weight_kld(self, scan, pf):
+		self.weight_particles(scan, pf)
 
 	def smudge_amcl(self, resampledPoses):
 				
@@ -184,27 +196,24 @@ class UpdateParticleCloud():
 		return resampledPoses
 
 	#Updates particles according to KLD-AMCL
-	def update_kld_amcl(self, scan, pf):
-		self.weight_particles(scan, pf)
-
-		numParticles = len(pf.particlecloud.poses)
-
-		rospy.loginfo(maxWeight)
-
-		#if the maximum weighted particle has a weight below 7 reinitialise the particles
-		if maxWeight < 7:
-			pf.particlecloud = pf.reinitialise_cloud(pf.estimatedpose.pose.pose, 3.0, True)
-			self.weight_particles(scan, pf)
-			numParticles = len(pf.particlecloud.poses)
+	def resample_kld(self, particleWT, tWeight):
+		#particleWT[i][0] is the map_topic associated with the particle
+		#particleWT[i][1] is the particle
+		#particleWT[i][2] is the weight associated with the particle 
+		#self.mapInfo[i][0] is the map_topic associated with the listFreePoints	
+		#self.mapInfo[i][1] is the listFreePoints 
+		#self.mapInfo[i][2] is the resolution of the map associated with listFreePoints
+		numParticles = len(particleWT)
 
 		index = 0
 		notAccepted = True
-		listFreePoints = pf.listFreePoints
+		listFreePoints = []
 		pArray = PoseArray()
 
 		#Initialize KLD Sampling 	
 		zvalue = 1.65
 		bins = [[]]
+		binsDict = {}
 		binsSize = 0
 		k = 0 #Number of Bins not empty
 		epsilon = 0.15
@@ -213,44 +222,57 @@ class UpdateParticleCloud():
 		Mmin = 100
 
 		#Initialising the bins
-		for i in range(0,len(listFreePoints)):
-			currentCell = listFreePoints[i]
-			cellX = currentCell.x
-			cellY = currentCell.y
-			valueBin = False
-			bins.append([cellX, cellY, valueBin])
-			binsSize += 1
+		for i in range(0, len(self.mapInfo)):
+			listFreePoints = self.mapInfo[i][1]
+
+			for j in range(0,len(listFreePoints)):
+				currentCell = listFreePoints[i]
+				topic = self.mapInfo[i][0]				
+				cellX = currentCell.x
+				cellY = currentCell.y
+				valueBin = False
+				#bins.append([topic, cellX, cellY, valueBin])
+				binsDict[(topic, cellX, cellY)] = False				
+				binsSize += 1
 	
 		#Resample the poses
-		samples = []
-		index = 0
-
 		while (M < Mx or M < Mmin) :
 			#Get Sample 
 			notAccepted = True
-
 			while (notAccepted):
 				index = random.randint(0,numParticles-1)
-
-				if (random.uniform(0,1) < particleWeights[index]/totalWeight):
+				particle = particleWT[index]
+				if (random.uniform(0,1) < particle[2]/tWeight):
 					notAccepted = False
 
-			curr_sample = pf.particlecloud.poses[index]
+			curr_sample = (particle[0], particle[1])
 			pArray.poses.append(curr_sample)
 			M = M + 1
 
 			#Convert Coodinates of the Pose to know if the bin is Empty or not
-			xBin = int(curr_sample.position.x / pf.occupancy_map.info.resolution)
-			yBin = int(curr_sample.position.y / pf.occupancy_map.info.resolution)
+			for i in range(0,self.mapInfo) :
+				if (particle[0] == self.mapInfo[i][0]):
+				 	mapResolution = self.mapInfo[i][2]
+					xBin = int(curr_sample.position.x / mapResolution)
+					yBin = int(curr_sample.position.y / mapResolution)
+					break
 
 			for j in range(O, binsSize):
 				currentBin = bins[j]
 
-				if (currentBin[0] == xBin and currentBin[1] == yBin and currentBin[2] == False):
-					currentBin[2] = True
+				if ((curr_sample[0], xBin, yBin) in binsDict):
+					if (binsDict[(curr_sample[0], xBin, yBin)] == False):
+						binsDict[(curr_sample[0], xBin, yBin)] = True
+						k += 1
+
+						if (k > 1):
+							Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
+						break
+				"""if (currentBin[0] == curr_sample[0] and currentBin[1] == xBin and currentBin[2] == yBin and currentBin[3] == False):
+					currentBin[3] = True
 					k += 1
 
 					if (k > 1):
 						Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
-					break
+					break"""
 		return pArray

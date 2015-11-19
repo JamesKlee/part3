@@ -128,7 +128,7 @@ class PFLocaliserBase(object):
             #self.update_particle_cloud(scan)
             
 	    #SERVER CODE
-            self.cloud.weight_amcl(scan, self)
+            self.cloud.weight_kld(scan, self)
 
 	    # Get particle cloud and weights and publish it 
 	    pWeights = WeightedParticles()
@@ -155,7 +155,8 @@ class PFLocaliserBase(object):
 		    except:
 		    	self._weighted_particle_publisher.publish(pWeights)
 
-	    self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
+	    #self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
+	    self.particlecloud = resampledParticles
 	    
             self.particlecloud.header.frame_id = map_topic
             self.estimatedpose.pose.pose = self.estimate_pose()
