@@ -204,7 +204,6 @@ class UpdateParticleCloud():
 		#self.mapInfo[i][1] is the listFreePoints 
 		#self.mapInfo[i][2] is the resolution of the map associated with listFreePoints
 		numParticles = len(particleWT)
-
 		index = 0
 		notAccepted = True
 		listFreePoints = []
@@ -225,7 +224,7 @@ class UpdateParticleCloud():
 		for i in range(0, len(self.mapInfo)):
 			listFreePoints = self.mapInfo[i][1]
 
-			for j in range(0,len(listFreePoints)):
+			for j in range(0,len(listFreePoints), 50):
 				currentCell = listFreePoints[i]
 				topic = self.mapInfo[i][0]				
 				cellX = currentCell.x

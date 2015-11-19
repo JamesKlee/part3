@@ -87,7 +87,7 @@ class Node(object):
 		
 
 	def resample(self):
-		particles = self.updater.resample_amcl(self.particleWT, self.totalWeight)
+		particles = self.updater.resample_kld(self.particleWT, self.totalWeight)
 		toSend = []
 		for i in range(0, len(self.registered)):
 			toAdd = []
