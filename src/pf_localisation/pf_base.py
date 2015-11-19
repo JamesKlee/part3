@@ -123,6 +123,7 @@ class PFLocaliserBase(object):
                                                         scan.angle_max)
             self.sensor_model_initialised = True
         with self._update_lock:
+	    print("CALLED________________________________")
             t = time.time()
             # Call user-implemented particle filter update method
             #self.update_particle_cloud(scan)
@@ -147,18 +148,16 @@ class PFLocaliserBase(object):
 	    loop = True
 	    while loop:
 		    try:
-		   	pArray = rospy.wait_for_message("/updatedCloud", PoseArray, 0.5)
+		   	pArray = rospy.wait_for_message("/updatedCloud", PoseArray, 20)
 			rospy.loginfo("\tRECEIVED MESSAGE TO: " + pArray.header.frame_id)
 			if pArray.header.frame_id == map_topic:
 				loop = False
 				resampledParticles = pArray.poses
 		    except:
-		    	self._weighted_particle_publisher.publish(pWeights)
+		    	rospy.loginfo("TIMED OUT WAITING FOR MESSAGE")
+			sys.exit(1)
 		
 	    self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
-	    #particles = PoseArray()
-	    #particles.poses = resampledParticles
-	    #self.particlecloud = particles
 	    
             self.particlecloud.header.frame_id = map_topic
             self.estimatedpose.pose.pose = self.estimate_pose()

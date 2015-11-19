@@ -105,7 +105,7 @@ class UpdateParticleCloud():
 
 		self.weight_amcl(scan, pf)
 
-		resampledPoses = self.resample(pf.particlecloud.poses, pf.weights, pf.totalWeight)
+		resampledPoses = self.resample_amcl(pf.particlecloud.poses, pf.weights, pf.totalWeight)
 	
 		return self.smudge_amcl(resampledPoses)
 
@@ -173,7 +173,7 @@ class UpdateParticleCloud():
 
 		return pArray
 
-	def resample(self, particleWT, tWeight):
+	def resample_amcl(self, particleWT, tWeight):
 		#particleWT[i][0] is the map_topic associated with the particle
 		#particleWT[i][1] is the particle
 		#particleWT[i][2] is the weight associated with the particle 
