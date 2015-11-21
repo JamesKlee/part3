@@ -13,7 +13,7 @@ from geometry_msgs.msg import (PoseWithCovarianceStamped, PoseArray,
 from tf.msg import tfMessage
 from tf import transformations
 from nav_msgs.msg import OccupancyGrid
-from pf_localisation.msg import WeightedParticles, Registration
+from pf_localisation.msg import WeightedParticles
 from updateParticle import UpdateParticleCloud
 from estimatePose import EstimatePose
 from initialise import InitialiseCloud
@@ -21,6 +21,7 @@ from initialise import InitialiseCloud
 import math
 import random
 import sys
+import signal
 import numpy as np
 from util import rotateQuaternion, getHeading
 import numpy as np
@@ -58,7 +59,6 @@ class PFLocaliserBase(object):
 
 	self._weighted_particle_publisher = rospy.Publisher("/weightedParticles",
                                                     WeightedParticles)
-	self._registration_publisher = rospy.Publisher("/regNode", Registration)
         
         self._update_lock =  Lock()
         

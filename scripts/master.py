@@ -40,10 +40,10 @@ class Node(object):
 		if nFound and reg.toAdd:
 			self.registered.append((reg.frame_id, reg.freePoints, reg.resolution))
 			rospy.loginfo("\tREGISTERED: " + reg.frame_id)
-			self.updater.mapInfo = self.registered
 		elif not nFound and not reg.toAdd:
 			del self.registered[pos]
 			rospy.loginfo("\tDEREGISTERED: " + reg.frame_id)
+		self.updater.mapInfo = self.registered
 		self.lock.release()
 
 	def addParticles(self, wParticles):
