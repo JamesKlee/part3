@@ -12,10 +12,10 @@ import time
 
 class PFLocaliser(PFLocaliserBase):
        
-	def __init__(self, num):
+	def __init__(self, num, map_topic):
 			
 		# Call the superclass constructor
-		super(PFLocaliser, self).__init__(num)
+		super(PFLocaliser, self).__init__(num, map_topic)
 
 		# Set motion model parameters
 		self.ODOM_ROTATION_NOISE = 0#0.064
