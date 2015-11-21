@@ -25,7 +25,7 @@ class Node(object):
 
 		self._cloud_publisher = rospy.Publisher("/updatedCloud", PoseArray)
 		self._weighted_particle_subscriber = rospy.Subscriber("/weightedParticles", WeightedParticles, self.addParticles, queue_size=10)
-		self._register_subscriber = rospy.Subscriber("/regNode", Registration, self.register, queue_size=1)
+		self._register_subscriber = rospy.Subscriber("/regNode", Registration, self.register, queue_size=10)
 		rospy.loginfo("RUNNING")
 		
 	def register(self, reg):
