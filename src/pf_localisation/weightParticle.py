@@ -3,7 +3,10 @@ from functools import partial
 
 class weightParticle():
 	
-	def thread_weight(scan, pf, pose)
+	def thread_weight(self, scan, pf, pose):
+
+		print("POOP")
+
 		weight = pf.sensor_model.get_weight(scan, pose)
 		
 		if weight > maxim.value:
@@ -19,20 +22,27 @@ class weightParticle():
 				
 		return weight
 	
+	def p(self, pose):
+		return pose+1
+
 	def init(self, l, t, m):
-        global lock
-        global total
+		global lock
+		global total
 		global maxim
-        total = t
+		total = t
 		maxim = m
-        lock = l
+		lock = l
 	
 	def __init__(self, scan, pf, particles):
 		lc = Lock()
-        tot = Value('d', 0.0)
+		tot = Value('d', 0.0)
 		maxi = Value('d', 0.0)
-        p = Pool(processes = 8, initializer = self.init, initargs = (lc, tot, maxi,))
+		p = Pool(processes = 8, initializer = self.init, initargs = (lc, tot, maxi,))
 		
-        self.particleWeights = p.map(partial(self.thread_weight, scan, pf), particles)
+		#self.particleWeights = p.map(partial(self.thread_weight, scan, pf), particles)
+
+		q = p.map(self.p, particles)
+
+#		self.particleWeights = p.map(self.p, particles)
 		self.totalWeight = tot.value
-        self.maximumWeight = maxi.value
+		self.maximumWeight = maxi.value
