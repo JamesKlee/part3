@@ -16,12 +16,23 @@ class UpdateParticleCloud():
 	
 	#Weights all of the particles in the particle cloud
 	def weight_particles(self, scan, pf):
+		global maxWeight
+		global totalWeight
+		global particleWeights
+		maxWeight = 0.0
+		totalWeight = 0.0
+		particleWeights = []
+		#Calls the function to weight particles and record max weight and total weight
+		for i in range(0, len(pf.particlecloud.poses)):
+			weight = pf.sensor_model.get_weight(scan, pf.particlecloud.poses[i])
+			particleWeights.append(weight)
+			totalWeight += weight
+			if weight > maxWeight:
+				maxWeight = weight
 
-		doneWeight = weightParticle(scan, pf, pf.particlecloud.poses)
-		
-		pf.weights = doneWeight.particleWeights		
-		pf.maxWeight = doneWeight.maximumWeight
-		pf.totalWeight = doneWeight.totalWeight
+		pf.weights = particleWeights
+		pf.maxWeight = maxWeight
+		pf.totalWeight = totalWeight
 
 	#Updates particles according to MCL
 	def update_non_amcl(self, scan, pf):

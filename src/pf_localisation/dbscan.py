@@ -164,12 +164,12 @@ class DBScan():
         
         # Just return a point if there are no clusters
         if len(clusterInfo) == 0:
-            self.largestClusterSize = 1
-            
-            if len(self.points) > 0:
-	            return self.points[0]
-	        else:
-	            return Pose()
+			self.largestClusterSize = 1
+			
+			if len(self.points) > 0:
+				return self.points[0]
+			else:
+				return Pose()
 	            
         self.largestClusterSize = largestSize
         
