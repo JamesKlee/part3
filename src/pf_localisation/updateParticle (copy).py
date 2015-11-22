@@ -33,11 +33,6 @@ class UpdateParticleCloud():
 		pf.weights = particleWeights
 		pf.maxWeight = maxWeight
 		pf.totalWeight = totalWeight
-		#if the maximum weighted particle has a weight below 7 reinitialise the particles
-		if pf.maxWeight < 8:
-			pf.exploded = True
-		else:
-			pf.exploded = False
 
 	#Updates particles according to MCL
 	def update_non_amcl(self, scan, pf):
@@ -102,7 +97,7 @@ class UpdateParticleCloud():
 	#Updates particles according to AMCL
 	def update_amcl(self, scan, pf):
 
-		self.weight_particles(scan, pf)
+		self.weight_amcl(scan, pf)
 
 		resampledPoses = self.resample_amcl(pf.particlecloud.poses, pf.weights, pf.totalWeight)
 	
@@ -111,11 +106,22 @@ class UpdateParticleCloud():
 	#Updates particles according to KLD-AMCL
 	def update_kld_amcl(self, scan, pf):
 
-		self.weight_particles(scan, pf)
+		self.weight_kld(scan, pf)
 
 		resampledPoses = self.resample_kld(pf.particlecloud.poses, pf.weights, pf.totalWeight)
 	
 		return self.smudge_amcl(resampledPoses)
+
+	def weight_amcl(self, scan, pf):
+		self.weight_particles(scan, pf)
+
+		#if the maximum weighted particle has a weight below 7 reinitialise the particles
+		if pf.maxWeight < 8:
+			pf.particlecloud = pf.reinitialise_cloud(pf.estimatedpose.pose.pose, 3.0, True)
+			self.weight_particles(scan, pf)
+
+	def weight_kld(self, scan, pf):
+		self.weight_particles(scan, pf)
 
 	def smudge_amcl(self, resampledPoses):
 				
@@ -202,30 +208,29 @@ class UpdateParticleCloud():
 		resampledPoses = []
 
 		#Initialize KLD Sampling 	
-		zvalue = 2.1
+		zvalue = 1.65
 		binsDict = {}
 		binsSize = 0
 		k = 0 #Number of Bins not empty
-		epsilon = 0.05
-		Mmin = 50
+		epsilon = 0.15
 		M = 0
-		Mx = 0
+		Mx=0
+		Mmin = 100
 
 		#Initialising the bins
 		for i in range(0, len(self.mapInfo)):
 			listFreePoints = self.mapInfo[i][1]
 
-			for j in range(0,len(listFreePoints), 5):
-				currentCell = listFreePoints[j]
+			for j in range(0,len(listFreePoints), 50):
+				currentCell = listFreePoints[i]
 				topic = self.mapInfo[i][0]				
 				cellX = currentCell.x
 				cellY = currentCell.y
 				valueBin = False
-				binsDict[(topic, cellX, cellY)] = False			
-				binsSize = binsSize + 1
+				binsDict[(topic, cellX, cellY)] = False				
+				binsSize += 1
 
-
-		"""#Resample the poses
+		#Resample the poses
 		for m in range(0, len(self.mapInfo)):
 			M = 0
 			Mx = 0
@@ -250,22 +255,18 @@ class UpdateParticleCloud():
 						mapResolution = self.mapInfo[i][2]
 						xBin = int(curr_sample[1].position.x / mapResolution)
 						yBin = int(curr_sample[1].position.y / mapResolution)
-				
+						break
 
-				for l in range(0, binsSize):
+				for k in range(0, binsSize):
 					if ((curr_sample[0], xBin, yBin) in binsDict):
-						#rospy.loginfo("Hello")
 						if (binsDict[(curr_sample[0], xBin, yBin)] == False):
 							binsDict[(curr_sample[0], xBin, yBin)] = True
-							k = k + 1
-							rospy.loginfo("k is %s"%k)
+							k += 1
+
 							if (k > 1):
 								Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
 							break
-				rospy.loginfo("Mx is %s"%Mx)
-		
-		"""
-		while (M < Mx or M < Mmin) :
+		"""while (M < Mx or M < Mmin) :
 			#Get Sample 
 			notAccepted = True
 			while (notAccepted):
@@ -281,23 +282,27 @@ class UpdateParticleCloud():
 			#Convert Coodinates of the Pose to know if the bin is Empty or not
 			for i in range(0,len(self.mapInfo)) :
 				if (particle[0] == self.mapInfo[i][0]):
-					mapResolution = self.mapInfo[i][2]
+				 	mapResolution = self.mapInfo[i][2]
 					xBin = int(curr_sample[1].position.x / mapResolution)
 					yBin = int(curr_sample[1].position.y / mapResolution)
-				break
-			
+					break
 
-			for l in range(0, binsSize):
+			for k in range(0, binsSize):
+				#currentBin = bins[k]
+
 				if ((curr_sample[0], xBin, yBin) in binsDict):
-					#rospy.loginfo("Hello")
 					if (binsDict[(curr_sample[0], xBin, yBin)] == False):
 						binsDict[(curr_sample[0], xBin, yBin)] = True
-						k = k + 1
-						rospy.loginfo("k is %s"%k)
+						k += 1
+
 						if (k > 1):
 							Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
 						break
-			rospy.loginfo("Mx is %s"%Mx)
-		
-		rospy.loginfo("number of particles resampled %s"%len(resampledPoses))
+				if (currentBin[0] == curr_sample[0] and currentBin[1] == xBin and currentBin[2] == yBin and currentBin[3] == False):
+					currentBin[3] = True
+					k += 1
+
+					if (k > 1):
+						Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
+					break"""
 		return resampledPoses

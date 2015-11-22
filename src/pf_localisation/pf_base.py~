@@ -166,7 +166,7 @@ class PFLocaliserBase(object):
 			sys.exit(1)
 
 	    if reinit:
-		self.particlecloud = self.reinitialise_cloud(self.estimatedpose.pose.pose, 0, False)
+		self.particlecloud = self.reinitialise_cloud(self, self.estimatedpose.pose.pose, 0, False)
 	    else:
 	    	self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
 	    

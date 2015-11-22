@@ -24,8 +24,8 @@ class weightParticle():
 	"""	
 	def p(self, po):
 		lock.acquire()
-		lock.release()
 		return po+1
+		lock.release()
 
 	def init(self, l, t, m):
 		global lock
