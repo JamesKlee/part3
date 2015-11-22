@@ -24,8 +24,8 @@ class Node(object):
 		self.lock = thread.allocate_lock()
 
 		self._cloud_publisher = rospy.Publisher("/updatedCloud", PoseArray)
-		self._weighted_particle_subscriber = rospy.Subscriber("/weightedParticles", WeightedParticles, self.addParticles, queue_size=1)
-		self._register_subscriber = rospy.Subscriber("/regNode", Registration, self.register, queue_size=1)
+		self._weighted_particle_subscriber = rospy.Subscriber("/weightedParticles", WeightedParticles, self.addParticles, queue_size=10)
+		self._register_subscriber = rospy.Subscriber("/regNode", Registration, self.register, queue_size=10)
 		rospy.loginfo("RUNNING")
 		
 	def register(self, reg):
@@ -40,17 +40,14 @@ class Node(object):
 		if nFound and reg.toAdd:
 			self.registered.append((reg.frame_id, reg.freePoints, reg.resolution))
 			rospy.loginfo("\tREGISTERED: " + reg.frame_id)
-			self.updater.mapInfo = self.registered
 		elif not nFound and not reg.toAdd:
 			del self.registered[pos]
 			rospy.loginfo("\tDEREGISTERED: " + reg.frame_id)
+		self.updater.mapInfo = self.registered
 		self.lock.release()
 
 	def addParticles(self, wParticles):
-		if self.lock.locked():
-			return
-		else:
-			self.lock.acquire()
+		self.lock.acquire()
 		name = wParticles.poseArray.header.frame_id
 		toAdd = False
 		posReg = None

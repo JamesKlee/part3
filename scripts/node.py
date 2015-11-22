@@ -22,15 +22,26 @@ from threading import Lock
 
 import sys
 import time
+import signal
 from copy import deepcopy
 
 class ParticleFilterLocalisationNode(object):
 
 	map_topic = None
 
+	def intHandler(self, signum, frame):
+		register = Registration()
+		register.frame_id = map_topic
+		register.toAdd = False
+		register.resolution = 0.0
+		register.freePoints = []
+		self._registration_publisher.publish(register)
+		raise KeyboardInterrupt()
+
     	def __init__(self, _map_topic):
 		global map_topic
 		map_topic = _map_topic
+		signal.signal(signal.SIGINT, self.intHandler)
 
 		#PARTICLES
 		self.numParticles = 200

@@ -6,6 +6,7 @@ from geometry_msgs.msg import Pose, PoseArray, Quaternion
 from util import rotateQuaternion, getHeading
 
 import random
+from weightParticle import weightParticle
 
 class UpdateParticleCloud():
 	
@@ -15,28 +16,21 @@ class UpdateParticleCloud():
 	
 	#Weights all of the particles in the particle cloud
 	def weight_particles(self, scan, pf):
-
 		global maxWeight
 		global totalWeight
 		global particleWeights
-
 		maxWeight = 0.0
 		totalWeight = 0.0
-		
 		particleWeights = []
-		
 		#Calls the function to weight particles and record max weight and total weight
 		for i in range(0, len(pf.particlecloud.poses)):
 			weight = pf.sensor_model.get_weight(scan, pf.particlecloud.poses[i])
 			particleWeights.append(weight)
 			totalWeight += weight
-			
 			if weight > maxWeight:
 				maxWeight = weight
 
-		print(maxWeight)
-
-		pf.weights = particleWeights		
+		pf.weights = particleWeights
 		pf.maxWeight = maxWeight
 		pf.totalWeight = totalWeight
 
@@ -133,43 +127,47 @@ class UpdateParticleCloud():
 				
 		cont = True
 		pArray = PoseArray()
-		temp = []
-		val = Pose()
-		count = 0
-			
-		# TEST this value, rounding scalar
-		scale = 0.66
-	
-		while cont:
+
+		if len(resampledPoses):
 			temp = []
-			val = resampledPoses[0]
+			val = Pose()
 			count = 0
+			
+			# TEST this value, rounding scalar
+			scale = 0.66
 	
-			for i in range(0, len(resampledPoses)):
-				if (resampledPoses[i] == val):
-					count = count + 1
-				else:
-					temp.append(resampledPoses[i])
+			while cont:
+				temp = []
+				val = resampledPoses[0]
+				count = 0
 	
-			resampledPoses = temp
-			if (len(resampledPoses) == 0):
-				cont = False
+				for i in range(0, len(resampledPoses)):
+					if (resampledPoses[i] == val):
+						count = count + 1
+					else:
+						temp.append(resampledPoses[i])
+	
+				resampledPoses = temp
+				if (len(resampledPoses) == 0):
+					cont = False
 						
-			# THIS NEEDS TESTS, look at scalar above
-			if (count > 4) and len(resampledPoses) >= 50: #TEST
-				#count = count - 2
-				count = int(count * scale)
+				# THIS NEEDS TESTS, look at scalar above
+				if (count > 4) and len(resampledPoses) >= 50: #TEST
+					#count = count - 2
+					count = int(count * scale)
 						
-			for i in range(0, count):
-				if i > 0:
-					newPose = Pose()
-					newPose.position.x = random.gauss(val.position.x, 0.3) #TEST THIS
-					newPose.position.y = random.gauss(val.position.y, 0.3) #TEST THIS
-					newPose.orientation = rotateQuaternion(val.orientation, random.vonmisesvariate(0, 4)) #TEST THIS
-					pArray.poses.append(newPose)
+				for i in range(0, count):
+					if i > 0:
+						newPose = Pose()
+						newPose.position.x = random.gauss(val.position.x, 0.3) #TEST THIS
+						newPose.position.y = random.gauss(val.position.y, 0.3) #TEST THIS
+						newPose.orientation = rotateQuaternion(val.orientation, random.vonmisesvariate(0, 4)) #TEST THIS
+						pArray.poses.append(newPose)
 						
-				else:
-					pArray.poses.append(val)
+					else:
+						pArray.poses.append(val)
+		else:
+			pArray.poses = []
 
 		return pArray
 
@@ -211,7 +209,6 @@ class UpdateParticleCloud():
 
 		#Initialize KLD Sampling 	
 		zvalue = 1.65
-		bins = [[]]
 		binsDict = {}
 		binsSize = 0
 		k = 0 #Number of Bins not empty
@@ -230,12 +227,46 @@ class UpdateParticleCloud():
 				cellX = currentCell.x
 				cellY = currentCell.y
 				valueBin = False
-				#bins.append([topic, cellX, cellY, valueBin])
 				binsDict[(topic, cellX, cellY)] = False				
 				binsSize += 1
-	
+
 		#Resample the poses
-		while (M < Mx or M < Mmin) :
+		for m in range(0, len(self.mapInfo)):
+			M = 0
+			Mx = 0
+			mapName = self.mapInfo[m][0]
+
+			while (M < Mx or M < Mmin) :
+				#Get Sample 
+				notAccepted = True
+				while (notAccepted):
+					index = random.randint(0,numParticles-1)
+					particle = particleWT[index]
+					if (random.uniform(0,1) < particle[2]/tWeight) and (particle[0] == mapName):
+						notAccepted = False
+
+				curr_sample = (particle[0], particle[1])
+				resampledPoses.append(curr_sample)
+				M = M + 1
+
+				#Convert Coodinates of the Pose to know if the bin is Empty or not
+				for i in range(0,len(self.mapInfo)) :
+					if (particle[0] == self.mapInfo[i][0]):
+						mapResolution = self.mapInfo[i][2]
+						xBin = int(curr_sample[1].position.x / mapResolution)
+						yBin = int(curr_sample[1].position.y / mapResolution)
+						break
+
+				for k in range(0, binsSize):
+					if ((curr_sample[0], xBin, yBin) in binsDict):
+						if (binsDict[(curr_sample[0], xBin, yBin)] == False):
+							binsDict[(curr_sample[0], xBin, yBin)] = True
+							k += 1
+
+							if (k > 1):
+								Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
+							break
+		"""while (M < Mx or M < Mmin) :
 			#Get Sample 
 			notAccepted = True
 			while (notAccepted):
@@ -267,7 +298,7 @@ class UpdateParticleCloud():
 						if (k > 1):
 							Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
 						break
-				"""if (currentBin[0] == curr_sample[0] and currentBin[1] == xBin and currentBin[2] == yBin and currentBin[3] == False):
+				if (currentBin[0] == curr_sample[0] and currentBin[1] == xBin and currentBin[2] == yBin and currentBin[3] == False):
 					currentBin[3] = True
 					k += 1
 
