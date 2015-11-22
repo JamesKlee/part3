@@ -39,9 +39,12 @@ class weightParticle():
 		maxi = Value('d', 0.0)
 		p = Pool(processes = 8, initializer = self.init, initargs = (lc, tot, maxi,))
 		
+		#For testing
+		k = [1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8]
+		
 		#self.particleWeights = p.map(partial(self.thread_weight, scan, pf), particles)
 
-		q = p.map(self.p, particles)
+		self.particleWeights = p.map(self.p, particles)
 
 #		self.particleWeights = p.map(self.p, particles)
 		self.totalWeight = tot.value
