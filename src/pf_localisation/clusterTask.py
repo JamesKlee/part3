@@ -22,14 +22,13 @@ class ClusterTask:
 	
 		return h
 
-	def publish(self, floorName, pose, pointsInCluster):
+	def publish(self, floorName, pose, pointsInCluster, totalPoints):
 		c = Cluster()
 		c.header = self.gen_header()
 		c.floorName = floorName
 		c.cluster = pose
 		c.pointsInCluster = pointsInCluster
-		
-		# ...
+		c.totalPoints = totalPoints
 		
 		self.pub.publish(c)
 
@@ -38,7 +37,7 @@ def main(argv):
 	
 	rospy.init_node("cluster_task" , anonymous=True) # multiple tasks
 	
-	for i in range(1, 23):
+	for i in range(1, 2):
 		task.publish(Pose(), 2)
 	
 if __name__ == "__main__":

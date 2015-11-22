@@ -9,12 +9,12 @@ from collections import Counter
 estimates = {}
 
 def cluster_callback(c):
-	rospy.loginfo("Received cluster from " + c.floorName + " #" + str(c.header.seq))
+	#rospy.loginfo("Received cluster from " + c.floorName + " #" + str(c.header.seq))
 	
 	# add into result set
-	estimates[c.floorName] = c.pointsInCluster
+	estimates[c.floorName] = c.pointsInCluster / float(c.totalPoints)
 
-# gets the name of the floor with the largest cluster
+# get the name of the floor with the largest cluster
 def estimate_floor():
 	return max(estimates, key=(lambda k: estimates[k]))
 
@@ -22,14 +22,14 @@ def main():
 	rospy.init_node("cluster_decider")
 	rospy.Subscriber("cluster", Cluster, cluster_callback)
 	
-	rate = rospy.Rate(1) # 1hz
+	rate = rospy.Rate(2) # 2hz
 	
 	history = []
-	hlen = 3
+	hlen = 5
 	
 	while not rospy.is_shutdown():
-		print("clusters = " + str(estimates))
-		print("history = " + str(history))
+		rospy.loginfo("clusters = " + str(estimates))
+		rospy.loginfo("history = " + str(history))
 		
 		# add the largest cluster to history
 		if len(estimates) > 0:
@@ -42,8 +42,7 @@ def main():
 		if len(history) >= hlen:
 			guess = Counter(history[:hlen]).most_common(1)[0][0]
 		
-			print("I'm probably on the " + guess)
-			print("")
+			rospy.loginfo("I'm probably on the " + guess)
 		
 		rate.sleep()
 

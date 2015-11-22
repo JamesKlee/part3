@@ -38,9 +38,10 @@ class ParticleFilterLocalisationNode(object):
 		self._registration_publisher.publish(register)
 		raise KeyboardInterrupt()
 
-    	def __init__(self, _map_topic):
+    	def __init__(self, _map_topic, _algorithm_name):
 		global map_topic
 		map_topic = _map_topic
+		algorithm_name = _algorithm_name
 		signal.signal(signal.SIGINT, self.intHandler)
 
 		#PARTICLES
@@ -50,7 +51,7 @@ class ParticleFilterLocalisationNode(object):
         	# Minimum change (m/radians) before publishing new particle cloud and pose
         	self._PUBLISH_DELTA = rospy.get_param("publish_delta", 0.1)  
         
-       		self._particle_filter = pf_localisation.pf.PFLocaliser(self.numParticles, map_topic)
+       		self._particle_filter = pf_localisation.pf.PFLocaliser(self.numParticles, map_topic, _algorithm_name)
 
         	self._latest_scan = None
         	self._last_published_pose = None
@@ -179,13 +180,14 @@ class ParticleFilterLocalisationNode(object):
 		return (location_delta > self._PUBLISH_DELTA or heading_delta > self._PUBLISH_DELTA)
 
 # --- Main Program  ---
-if len(sys.argv) <= 1 or len(sys.argv) >= 3:
-	print("\tUSAGE: node.py <mapTopic>")
+if len(sys.argv) <= 2 or len(sys.argv) >= 4:
+	print("\tUSAGE: node.py <mapTopic> <algorithm>")
 	sys.exit(1)
 tmap = str(sys.argv[1])
+algorithmName = str(sys.argv[2])
 
 rospy.init_node("pf_localisation_" + tmap)
-node = ParticleFilterLocalisationNode(tmap)
+node = ParticleFilterLocalisationNode(tmap, algorithmName)
 time.sleep(2)
 node.initialisePose()
 rospy.spin()

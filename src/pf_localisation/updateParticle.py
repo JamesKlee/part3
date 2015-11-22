@@ -98,10 +98,18 @@ class UpdateParticleCloud():
 	def update_amcl(self, scan, pf):
 
 		self.weight_amcl(scan, pf)
+		
+		temp = []
+		for i in range(0, len(pf.particlecloud.poses)):
+			temp.append((pf.floorName, pf.particlecloud.poses[i], pf.weights[i]))
 
-		resampledPoses = self.resample_amcl(pf.particlecloud.poses, pf.weights, pf.totalWeight)
+		resampledPoses = self.resample_amcl(temp, pf.totalWeight)
+		
+		temp = []
+		for i in range(0, len(resampledPoses)):
+			temp.append(resampledPoses[i][1])
 	
-		return self.smudge_amcl(resampledPoses)
+		return self.smudge_amcl(temp)
 
 	#Updates particles according to KLD-AMCL
 	def update_kld_amcl(self, scan, pf):
