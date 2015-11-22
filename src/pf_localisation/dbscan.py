@@ -168,7 +168,7 @@ class DBScan():
             
             if len(self.points) > 0:
 	            return self.points[0]
-	        else:
+            else:
 	            return Pose()
 	            
         self.largestClusterSize = largestSize
