@@ -72,7 +72,6 @@ class Node(object):
 		if not toAdd:
 			self.lock.release()
 			return
-		rospy.loginfo("\tRECEIVED: " + name)
 
 		for i in range(0, len(wParticles.poseArray.poses)):
 			newWT = (name, wParticles.poseArray.poses[i], wParticles.array[i])
@@ -93,11 +92,9 @@ class Node(object):
 	def resample(self):
 		
 		particles = None
-		print("YO")
 		if self.ftype == "kld":
 			particles = self.updater.resample_kld(self.particleWT, self.totalWeight)
 		elif self.ftype == "amcl":
-			print("HERE")
 			particles = self.updater.resample_amcl(self.particleWT, self.totalWeight)
 		else:
 			rospy.logError("ERROR IN TYPE OF RESAMPLE")
@@ -132,13 +129,15 @@ class Node(object):
 		self.lock.release()
 
 	def send(self, map_topic, plist):
-		rospy.loginfo("\tSENDING TO: " + map_topic)
 		particles = Particles()
 		particles.particles.header.seq = 1
 		particles.particles.header.stamp = rospy.get_rostime()
 		particles.particles.header.frame_id = map_topic
 		particles.particles.poses = plist
-		particles.reinit = self.reinit
+		if self.ftype == "amcl":
+			particles.reinit = self.reinit
+		else:
+			particles.reinit = False
 		self._cloud_publisher.publish(particles)
 
 rospy.init_node("master")
