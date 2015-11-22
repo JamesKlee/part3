@@ -39,7 +39,7 @@ class PFLocaliserBase(object):
     INIT_Z = 0 			# Initial z location of robot (metres)
     INIT_HEADING = 0 	# Initial orientation of robot (radians)
     
-    def __init__(self, _num, _mapTopic, _algorithmName):
+    def __init__(self, _num, _map_topic):
         # Initialise fields
         self.estimatedpose =  PoseWithCovarianceStamped()
         self.occupancy_map = OccupancyGrid()
@@ -50,7 +50,7 @@ class PFLocaliserBase(object):
 	self.totalWeight = 0
 	self.num = _num
 	self.clusterTask = ClusterTask()
-	self.floorName = _mapTopic
+	self.floorName = _map_topic
 	self.exploded = False
 
 	# Initialise objects
@@ -93,18 +93,7 @@ class PFLocaliserBase(object):
         
         # Sensor model
         self.sensor_model =  sensor_model.SensorModel()
-        
-        print(_algorithmName)
-        
-        # What algorithm do we use?
-        if _algorithmName == "async":
-        	self.asynchronous = True
-        elif _algorithmName == "sync":
-        	self.asynchronous = False
-        else:
-        	print("Invalid argument 3: expected \"sync\" or \"async\"")
-        	sys.exit(1)
-			
+
 	# Free Point where Robot can be
 	self.listFreePoints = []
 
@@ -145,39 +134,6 @@ class PFLocaliserBase(object):
             #self.update_particle_cloud(scan)
             
 	    #SERVER CODE
-<<<<<<< HEAD
-	    if self.asynchronous: 
-            	self.update_particle_cloud(scan)	
-	    else:
-			self.cloud.weight_kld(scan, self)
-	    # Get particle cloud and weights and publish it 
-			pWeights = WeightedParticles()
-			pWeights.poseArray.header.seq = 1
-			pWeights.poseArray.header.stamp = rospy.get_rostime()
-			pWeights.poseArray.header.frame_id = map_topic
-			pWeights.poseArray.poses = self.particlecloud.poses
-			pWeights.array = self.weights
-			pWeights.maxWeight = self.maxWeight
-			pWeights.totalWeight = self.totalWeight
-			rospy.loginfo("SENDING FROM: " + map_topic)
-			self._weighted_particle_publisher.publish(pWeights)
-
-			resampledParticles = []
-
-			loop = True
-			while loop:
-				try:
-			   		pArray = rospy.wait_for_message("/updatedCloud", PoseArray, 20)
-					rospy.loginfo("\tRECEIVED MESSAGE TO: " + pArray.header.frame_id)
-					if pArray.header.frame_id == map_topic:
-						loop = False
-						resampledParticles = pArray.poses
-				except:
-					rospy.loginfo("TIMED OUT WAITING FOR MESSAGE")
-				sys.exit(1)
-		
-			self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
-=======
             self.cloud.weight_particles(scan, self)
 
 	    # Get particle cloud and weights and publish it 
@@ -210,10 +166,9 @@ class PFLocaliserBase(object):
 			sys.exit(1)
 
 	    if reinit:
-		self.particlecloud = self.reinitialise_cloud(self.estimatedpose.pose.pose, 0, False)
+		self.particlecloud = self.reinitialise_cloud(self, self.estimatedpose.pose.pose, 0, False)
 	    else:
 	    	self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
->>>>>>> f33d1a971a9a212cdaf05ab98d75b31339f79f39
 	    
             self.particlecloud.header.frame_id = map_topic
             self.estimatedpose.pose.pose = self.estimate_pose()
@@ -222,7 +177,7 @@ class PFLocaliserBase(object):
             floorName = self.floorName
             estimatedPose = self.estimatedpose.pose.pose
             largestClusterSize = self.estimate.dbscan_largestclustersize()
-            self.clusterTask.publish(floorName, estimatedPose, largestClusterSize, numParticles)
+            self.clusterTask.publish(floorName, estimatedPose, largestClusterSize)
             
             currentTime = rospy.Time.now()
             

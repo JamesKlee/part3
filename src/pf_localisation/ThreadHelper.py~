@@ -1,0 +1,9 @@
+def weightPool(args):
+	weight = args[1].sensor_model.get_weight(args[2], args[0])		
+	return (args[0], weight)
+
+def combine(particles, pf, scan):
+	toReturn = []
+	for i in range (0, len(particles)):
+		toReturn.append(particles[i], pf, scan)
+	return toReturn
