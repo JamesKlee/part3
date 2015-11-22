@@ -33,11 +33,6 @@ class UpdateParticleCloud():
 		pf.weights = particleWeights
 		pf.maxWeight = maxWeight
 		pf.totalWeight = totalWeight
-		#if the maximum weighted particle has a weight below 7 reinitialise the particles
-		if pf.maxWeight < 8:
-			pf.exploded = True
-		else:
-			pf.exploded = False
 
 	#Updates particles according to MCL
 	def update_non_amcl(self, scan, pf):
@@ -102,7 +97,7 @@ class UpdateParticleCloud():
 	#Updates particles according to AMCL
 	def update_amcl(self, scan, pf):
 
-		self.weight_particles(scan, pf)
+		self.weight_amcl(scan, pf)
 
 		resampledPoses = self.resample_amcl(pf.particlecloud.poses, pf.weights, pf.totalWeight)
 	
@@ -111,11 +106,22 @@ class UpdateParticleCloud():
 	#Updates particles according to KLD-AMCL
 	def update_kld_amcl(self, scan, pf):
 
-		self.weight_particles(scan, pf)
+		self.weight_kld(scan, pf)
 
 		resampledPoses = self.resample_kld(pf.particlecloud.poses, pf.weights, pf.totalWeight)
 	
 		return self.smudge_amcl(resampledPoses)
+
+	def weight_amcl(self, scan, pf):
+		self.weight_particles(scan, pf)
+
+		#if the maximum weighted particle has a weight below 7 reinitialise the particles
+		if pf.maxWeight < 8:
+			pf.particlecloud = pf.reinitialise_cloud(pf.estimatedpose.pose.pose, 3.0, True)
+			self.weight_particles(scan, pf)
+
+	def weight_kld(self, scan, pf):
+		self.weight_particles(scan, pf)
 
 	def smudge_amcl(self, resampledPoses):
 				
