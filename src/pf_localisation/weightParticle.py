@@ -53,3 +53,7 @@ class weightParticle():
 #		self.particleWeights = p.map(self.p, particles)
 #		self.totalWeight = tot.value
 #		self.maximumWeight = maxi.value
+		if self.maximumWeight < 8:
+			self.exploded = True
+		else:
+			self.exploded = False

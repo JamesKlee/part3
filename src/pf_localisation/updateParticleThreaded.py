@@ -33,6 +33,7 @@ class UpdateParticleCloud():
 		pf.weights = doneWeight.particleWeights		
 		pf.maxWeight = doneWeight.maximumWeight
 		pf.totalWeight = doneWeight.totalWeight
+		pf.exploded = doneWeight.exploded
 
 	#Updates particles according to MCL
 	def update_non_amcl(self, scan, pf):
