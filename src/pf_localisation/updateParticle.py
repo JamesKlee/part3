@@ -313,5 +313,5 @@ class UpdateParticleCloud():
 							Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
 						break
 		
-		rospy.loginfo("number of particles resampled %s"%len(resampledPoses))
+		#rospy.loginfo("number of particles resampled %s"%len(resampledPoses))
 		return resampledPoses

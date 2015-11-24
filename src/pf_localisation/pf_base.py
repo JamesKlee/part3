@@ -25,7 +25,6 @@ import signal
 import numpy as np
 from util import rotateQuaternion, getHeading
 import numpy as np
-from threading import Lock
 import time
 import sensor_model
 from clusterTask import ClusterTask
@@ -59,8 +58,6 @@ class PFLocaliserBase(object):
 		self.init = InitialiseCloud()
 
 		self._weighted_particle_publisher = rospy.Publisher("/weightedParticles", WeightedParticles)
-
-		self._update_lock =  Lock()
 		
 		# Parameters
 		self.ODOM_ROTATION_NOISE = 0 		# Odometry model rotation noise
@@ -119,7 +116,7 @@ class PFLocaliserBase(object):
 		"""
 		raise NotImplementedError()
 
-	def update_filter(self, scan, map_topic, numParticles):
+	def update_filter(self, scan, map_topic, numParticles, lock):
 		"""
 		Called whenever there is a new LaserScan message.
 		This calls update methods (implemented by subclass) to do actual
@@ -133,7 +130,7 @@ class PFLocaliserBase(object):
 		if not self.sensor_model_initialised:
 			self.sensor_model.set_laser_scan_parameters(self.NUMBER_PREDICTED_READINGS, scan.range_max, len(scan.ranges), scan.angle_min, scan.angle_max)
 			self.sensor_model_initialised = True
-		with self._update_lock:
+		with lock:
 			print("CALLED________________________________")
 			t = time.time()
 			# Call user-implemented particle filter update method
@@ -268,7 +265,7 @@ class PFLocaliserBase(object):
 		# Add the transform to the list of all transforms
 		self.tf_message = tfMessage(transforms=[new_tfstamped])
 
-	def predict_from_odometry(self, odom):
+	def predict_from_odometry(self, odom, lock):
 		"""
 		Adds the estimated motion from odometry readings to each of the
 		particles in particlecloud.
@@ -276,7 +273,7 @@ class PFLocaliserBase(object):
 		:Args:
 			| odom (nav_msgs.msg.Odometry): Recent Odometry data
 		"""
-		with self._update_lock:
+		with lock:
 
 			t = time.time()
 			x = odom.pose.pose.position.x
