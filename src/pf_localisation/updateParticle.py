@@ -248,7 +248,7 @@ class UpdateParticleCloud():
 			while (notAccepted):
 				index = random.randint(0,numParticles-1)
 				particle = particleWT[index]
-				if (random.uniform(0,1) < particle[2]/tWeight):
+				if (random.random() < particle[2]/tWeight):
 					notAccepted = False
 			
 			curr_sample = (particle[0], particle[1])

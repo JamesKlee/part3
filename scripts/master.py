@@ -104,18 +104,8 @@ class Node(object):
 			particles = self.updater.resample_amcl(self.particleWT, self.totalWeight)
 		else:
 			rospy.logError("ERROR IN TYPE OF RESAMPLE")
-
-		toSend = []
-		for i in range(0, len(self.registered)):
-			toAdd = []
-			toAdd.append(self.registered[i][0])
-			toSend.append(toAdd)
-
-		for i in range (0, len(particles)):
-			particle = particles[i]
-			for j in range(0, len(toSend)):
-				if particle[0] == toSend[j][0]:
-					toSend[j].append(particle[1])
+		
+		particles = []
 
 		self.reinit = True
 
