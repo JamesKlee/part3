@@ -46,6 +46,7 @@ class ParticleFilterLocalisationNode(object):
 
 		#PARTICLES
 		self.numParticles = 200
+		self.lock = Lock()
 
 
         	# Minimum change (m/radians) before publishing new particle cloud and pose
@@ -125,8 +126,8 @@ class ParticleFilterLocalisationNode(object):
         	the latest laser.
         	"""
         	if self._initial_pose_received:
-        	    t_odom = self._particle_filter.predict_from_odometry(odometry)
-        	    t_filter = self._particle_filter.update_filter(self._latest_scan, map_topic, self.numParticles)
+        	    t_odom = self._particle_filter.predict_from_odometry(odometry, self.lock)
+        	    t_filter = self._particle_filter.update_filter(self._latest_scan, map_topic, self.numParticles, self.lock)
         	    #if t_odom + t_filter > 0.1:
         	     #   rospy.logwarn("Filter cycle overran timeslot")
         	      #  rospy.loginfo("Odometry update: %fs"%t_odom)
