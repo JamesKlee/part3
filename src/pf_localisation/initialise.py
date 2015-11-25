@@ -78,3 +78,28 @@ class InitialiseCloud():
 			newPose.orientation = rotateQuaternion(initialpose.orientation, random.uniform(-math.pi, math.pi))
 			poseArray.poses.append(newPose)
 		return poseArray
+
+	def equal_initialise(self, initialpose, numParticles, pf):
+		self.set_map_dim(pf)
+		poseArray = PoseArray()
+		poseArray.header.stamp = rospy.Time.now()
+		listFreePoints = pf.listFreePoints
+
+		pixelGap = 18
+
+		for m in range(0, len(listFreePoints), pixelGap):
+			coordinates = listFreePoints[m]
+			if coordinates.y % pixelGap == 0.0:
+				xNewPose = coordinates.x * pf.occupancy_map.info.resolution
+				yNewPose = coordinates.y * pf.occupancy_map.info.resolution
+			
+				#newPose Parameters
+				newPose  = Pose()
+				newPose.position.x = xNewPose
+				newPose.position.y = yNewPose
+				newPose.orientation = rotateQuaternion(initialpose.orientation, random.uniform(-math.pi, math.pi))
+				poseArray.poses.append(newPose)
+		return poseArray
+
+
+

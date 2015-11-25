@@ -3,7 +3,7 @@ import math
 import rospy
 
 from geometry_msgs.msg import Pose, PoseArray, Quaternion
-from util import rotateQuaternion, getHeading
+from util import rotateQuaternion, getHeading, createQuaternion
 
 import random
 from weightParticle import weightParticle
@@ -13,6 +13,12 @@ class UpdateParticleCloud():
 	totalWeight = 0.0
 	maxWeight = 0.0
 	particleWeights = []
+
+	def __init__(self):
+		self.pose = Pose()
+		self.pose.position.x = 0
+		self.pose.position.y = 0
+		self.pose.orientation = createQuaternion(0)
 	
 	#Weights all of the particles in the particle cloud
 	def weight_particles(self, scan, pf):
@@ -300,7 +306,6 @@ class UpdateParticleCloud():
 
 			#Count Number Samples
 			numberSamplesMap[curr_sample[0]] = numberSamplesMap[curr_sample[0]] + 1
-
 			#Convert Coodinates of the Pose to know if the bin is Empty or not
 			xBin = -1
 			yBin = -1
@@ -325,35 +330,40 @@ class UpdateParticleCloud():
 
 		#Add particles if one map have no particles
 		nameMapAdd = None
+		mapResolution = 0
 		minNumberParticles = -1 #Must be different of 0
 
-		for key, value in numberSamplesMap.items():
+		for key in numberSamplesMap:
+			rospy.loginfo("Map = %s"%key)
+			rospy.loginfo("Value = %s"%numberSamplesMap[key])
+			value = numberSamplesMap[key]
 			if value == 0 :
 				nameMapAdd = key
-			
-			if (value != 0) and (value < minNumberParticles):
+			if (value != 0) and ((value < minNumberParticles) or minNumberParticles == -1):
 				minNumberParticles = value
 
 		if nameMapAdd != None:
+			rospy.loginfo("Map to re-Initialize = %s"%nameMapAdd)
 			#Finding Correct listFreePoints
 			listFreePoints = []
-
+			rospy.loginfo("minNumberParticles = %s"%minNumberParticles)
 			for p in range(0, len(self.mapInfo)):
-				if self.mapInfo[i][0] == nameMapAdd:
-					listFreePoints = self.mapInfo[i][1] 				
+				if self.mapInfo[p][0] == nameMapAdd:
+					listFreePoints = self.mapInfo[p][1] 
+					mapResolution = self.mapInfo[p][2]  				
 			#Generate Particles
 			for m in range(0, minNumberParticles):
-
+				rospy.loginfo("ListFree = %s"%len(listFreePoints))
 				randUninform = int(random.uniform(0,len(listFreePoints)-1))
 				coordinates = listFreePoints[randUninform]
-				xNewPose = coordinates.x * pf.occupancy_map.info.resolution
-				yNewPose = coordinates.y * pf.occupancy_map.info.resolution
+				xNewPose = coordinates.x * mapResolution
+				yNewPose = coordinates.y * mapResolution
 			
 				#newPose Parameters
 				newPose  = Pose()
 				newPose.position.x = xNewPose
 				newPose.position.y = yNewPose
-				newPose.orientation = rotateQuaternion(initialpose.orientation, random.uniform(-math.pi, math.pi))
+				newPose.orientation = rotateQuaternion(self.pose.orientation, random.uniform(-math.pi, math.pi))
 				curr_sample = (nameMapAdd, newPose)
 				resampledPoses.append(curr_sample)
 

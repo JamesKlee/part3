@@ -220,6 +220,7 @@ class UpdateParticleCloud():
 		#Initialize KLD Sampling 	
 		zvalue = 2.1
 		binsDict = {}
+		maxSizeBin = {}
 		binsSize = 0
 		k = 0 #Number of Bins not empty
 		epsilon = 0.05
@@ -237,7 +238,8 @@ class UpdateParticleCloud():
 				cellX = currentCell.x
 				cellY = currentCell.y
 				valueBin = False
-				binsDict[(topic, cellX, cellY)] = False			
+				binsDict[(topic, cellX, cellY)] = [False,0]
+				maxSizeBin[topic] = 0			
 				binsSize = binsSize + 1
 
 
@@ -303,15 +305,22 @@ class UpdateParticleCloud():
 				break
 			
 
-			for l in range(0, binsSize):
-				if ((curr_sample[0], xBin, yBin) in binsDict):
-					#rospy.loginfo("Hello")
-					if (binsDict[(curr_sample[0], xBin, yBin)] == False):
-						binsDict[(curr_sample[0], xBin, yBin)] = True
-						k = k + 1
-						if (k > 1):
-							Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
-						break
-		
+			if ((curr_sample[0], xBin, yBin) in binsDict):
+				#rospy.loginfo("Hello")
+				binsDict[(curr_sample[0], xBin, yBin)][1] = binsDict[(curr_sample[0], xBin, yBin)][1] + 1
+				#Define the largest bin for each map
+				if binsDict[(curr_sample[0], xBin, yBin)][1] > maxSizeBin[curr_sample[0]]:
+					 maxSizeBin[curr_sample[0]] = binsDict[(curr_sample[0], xBin, yBin)][1]
+
+				if (binsDict[(curr_sample[0], xBin, yBin)][0] == False):
+					binsDict[(curr_sample[0], xBin, yBin)][0] = True
+
+					k = k + 1
+					if (k > 1):
+						Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
 		#rospy.loginfo("number of particles resampled %s"%len(resampledPoses))
+		for test in maxSizeBin:
+			rospy.loginfo("Map =  %s"%test)
+			rospy.loginfo("Max Bin = %s"%maxSizeBin[test])				
+			rospy.loginfo("number of particles resampled %s"%len(resampledPoses))
 		return resampledPoses
