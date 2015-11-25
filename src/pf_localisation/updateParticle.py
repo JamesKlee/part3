@@ -297,6 +297,9 @@ class UpdateParticleCloud():
 			M = M + 1
 
 			#Convert Coodinates of the Pose to know if the bin is Empty or not
+			xBin = -1
+			yBin = -1
+
 			for i in range(0,len(self.mapInfo)) :
 				if (particle[0] == self.mapInfo[i][0]):
 					mapResolution = self.mapInfo[i][2]
