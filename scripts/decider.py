@@ -6,17 +6,16 @@ from geometry_msgs.msg import Pose
 from pf_localisation.msg import Cluster
 from collections import Counter
 
-estimates = {}
+likelihood = {}
+posterior = {}
 
 def cluster_callback(c):
-	#rospy.loginfo("Received cluster from " + c.floorName + " #" + str(c.header.seq))
+	floor = c.floorName
 	
-	# add into result set
-	estimates[c.floorName] = c.pointsInCluster / float(c.totalPoints)
-
-# get the name of the floor with the largest cluster
-def estimate_floor():
-	return max(estimates, key=(lambda k: estimates[k]))
+	likelihood[floor] = c.pointsInCluster / float(c.totalPoints)
+	
+	if not posterior.has_key(floor):
+		posterior[floor] = 0.5
 
 def main():
 	rospy.init_node("cluster_decider")
@@ -24,24 +23,23 @@ def main():
 	
 	rate = rospy.Rate(2) # 2hz
 	
-	history = []
-	hlen = 5
-	
 	while not rospy.is_shutdown():
-		rospy.loginfo("clusters = " + str(estimates))
-		rospy.loginfo("history = " + str(history))
+		total = 0
 		
-		# add the largest cluster to history
-		if len(estimates) > 0:
-			history.insert(0, estimate_floor())
-			
-			if len(history) > hlen:
-				history = history[:hlen]
+		for (floor, val) in posterior.items():
+			# multiply by the previous probability
+			posterior[floor] *= likelihood[floor]
+			total += posterior[floor]
 		
-		# take a guess 
-		if len(history) >= hlen:
-			guess = Counter(history[:hlen]).most_common(1)[0][0]
+		# normalise the posterior
+		for (floor, val) in posterior.items():
+			posterior[floor] /= total
 		
+		# get the floor with the largest probability
+		if len(posterior):
+			print("")
+			print(posterior)
+			guess = max(posterior, key=(lambda k: posterior[k]))
 			rospy.loginfo("I'm probably on the " + guess)
 		
 		rate.sleep()
