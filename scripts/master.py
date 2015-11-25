@@ -52,6 +52,10 @@ class Node(object):
 		elif not nFound and not reg.toAdd:
 			del self.registered[pos]
 			rospy.loginfo("\tDEREGISTERED: " + reg.frame_id)
+			
+			if len(self.particlesAdded) == len(self.registered):
+				self.resample()
+
 		self.updater.mapInfo = self.registered
 		self.lock.release()
 
@@ -60,11 +64,9 @@ class Node(object):
 		name = wParticles.poseArray.header.frame_id
 		#print(name)
 		toAdd = False
-		posReg = None
 		for i in range(0, len(self.registered)):			
 			if self.registered[i][0] == name:
 				toAdd = True
-				posReg = i
 		if not toAdd:
 			print("NOT FOUND IN REG")
 			self.lock.release()

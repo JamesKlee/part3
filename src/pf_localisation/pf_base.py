@@ -156,39 +156,34 @@ class PFLocaliserBase(object):
 
 				resampledParticles = []
 				reinit = None
-
-				loop = True
-				while loop:
-					try:
-						pArray = rospy.wait_for_message("/updatedCloud", Particles, 5)
-						#rospy.loginfo("\tRECEIVED MESSAGE TO: " + pArray.particles.header.frame_id)
-						if pArray.particles.header.frame_id == map_topic:
-							loop = False
-							resampledParticles = pArray.particles.poses
-							reinit = pArray.reinit
-					except:
-						rospy.loginfo("TIMED OUT WAITING FOR MESSAGE")
-						self._weighted_particle_publisher.publish(pWeights)
-
-					if reinit:
-						self.particlecloud = self.reinitialise_cloud(self.estimatedpose.pose.pose, 0, False)
-					else:
-						self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
+				try:
+					pArray = rospy.wait_for_message("/updatedCloud", Particles, 5)
+					#rospy.loginfo("\tRECEIVED MESSAGE TO: " + pArray.particles.header.frame_id)
+					if pArray.particles.header.frame_id == map_topic:
+						loop = False
+						resampledParticles = pArray.particles.poses
+						reinit = pArray.reinit
+						if reinit:
+							self.particlecloud = self.reinitialise_cloud(self.estimatedpose.pose.pose, 0, False)
+						else:
+							self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
+							self.particlecloud.header.frame_id = map_topic
 						
-			
-			self.particlecloud.header.frame_id = map_topic
-			self.estimatedpose.pose.pose = self.estimate_pose()
+				except:
+					rospy.loginfo("TIMED OUT WAITING FOR MESSAGE")
 
+			self.estimatedpose.pose.pose = self.estimate_pose()
+						
 			# Publish the estimated pose
 			floorName = self.floorName
 			estimatedPose = self.estimatedpose.pose.pose
 			largestClusterSize = self.estimate.dbscan_largestclustersize()
 			self.clusterTask.publish(floorName, estimatedPose, largestClusterSize, numParticles)
-
 			currentTime = rospy.Time.now()
-
+						
 			# Given new estimated pose, now work out the new transform
 			self.recalculate_transform(currentTime)
+						
 			# Insert correct timestamp in particlecloud and estimatedpose,
 			# so extending subclasses don't need to worry about this, but can
 			# just concentrate on updating actual particle and pose locations
@@ -368,6 +363,8 @@ class PFLocaliserBase(object):
 					self.listFreePoints.append(point)
 				i += 1
 		rospy.loginfo("Len listFreePoints= %s"%len(self.listFreePoints))
+		self.cloud.mapInfo = []
+		self.cloud.mapInfo.append((self.floorName, self.listFreePoints, self.occupancy_map.info.resolution))
 
 		# Map has changed, so we should reinitialise the particle cloud
 		rospy.loginfo("Particle filter got map. (Re)initialising.")
