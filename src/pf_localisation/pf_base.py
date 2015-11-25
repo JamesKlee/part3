@@ -160,7 +160,7 @@ class PFLocaliserBase(object):
 				loop = True
 				while loop:
 					try:
-						pArray = rospy.wait_for_message("/updatedCloud", Particles, 20)
+						pArray = rospy.wait_for_message("/updatedCloud", Particles, 5)
 						#rospy.loginfo("\tRECEIVED MESSAGE TO: " + pArray.particles.header.frame_id)
 						if pArray.particles.header.frame_id == map_topic:
 							loop = False
@@ -168,12 +168,13 @@ class PFLocaliserBase(object):
 							reinit = pArray.reinit
 					except:
 						rospy.loginfo("TIMED OUT WAITING FOR MESSAGE")
-						sys.exit(1)
+						self._weighted_particle_publisher.publish(pWeights)
 
 					if reinit:
 						self.particlecloud = self.reinitialise_cloud(self.estimatedpose.pose.pose, 0, False)
 					else:
 						self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
+						
 			
 			self.particlecloud.header.frame_id = map_topic
 			self.estimatedpose.pose.pose = self.estimate_pose()

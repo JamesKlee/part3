@@ -80,7 +80,6 @@ class InitialiseCloud():
 		return poseArray
 
 	def equal_initialise(self, initialpose, numParticles, pf):
-		self.set_map_dim(pf)
 		poseArray = PoseArray()
 		poseArray.header.stamp = rospy.Time.now()
 		listFreePoints = pf.listFreePoints
@@ -99,6 +98,7 @@ class InitialiseCloud():
 				newPose.position.y = yNewPose
 				newPose.orientation = rotateQuaternion(initialpose.orientation, random.uniform(-math.pi, math.pi))
 				poseArray.poses.append(newPose)
+		print("HI")
 		return poseArray
 
 

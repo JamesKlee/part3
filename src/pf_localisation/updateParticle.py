@@ -34,7 +34,7 @@ class UpdateParticleCloud():
 		pf.maxWeight = maxWeight
 		pf.totalWeight = totalWeight
 		#if the maximum weighted particle has a weight below 7 reinitialise the particles
-		if pf.maxWeight < 8:
+		if pf.maxWeight < 7:
 			pf.exploded = True
 		else:
 			pf.exploded = False

@@ -27,7 +27,9 @@ class Node(object):
 		self.totalWeight = 0
 		self.updater = UpdateParticleCloud()
 		self.lock = thread.allocate_lock()
+		self.reinitList = []
 		self.reinit = False
+		self.mapAdded = False
 
 		self._cloud_publisher = rospy.Publisher("/updatedCloud", Particles)
 		self._weighted_particle_subscriber = rospy.Subscriber("/weightedParticles", WeightedParticles, self.addParticles, queue_size=100)
@@ -45,6 +47,7 @@ class Node(object):
 
 		if nFound and reg.toAdd:
 			self.registered.append((reg.frame_id, reg.freePoints, reg.resolution))
+			self.mapAdded = True
 			rospy.loginfo("\tREGISTERED: " + reg.frame_id)
 		elif not nFound and not reg.toAdd:
 			del self.registered[pos]
@@ -55,6 +58,7 @@ class Node(object):
 	def addParticles(self, wParticles):
 		self.lock.acquire()
 		name = wParticles.poseArray.header.frame_id
+		#print(name)
 		toAdd = False
 		posReg = None
 		for i in range(0, len(self.registered)):			
@@ -80,7 +84,7 @@ class Node(object):
 		self.totalWeight = self.totalWeight + wParticles.totalWeight
 		self.particlesAdded.append(name)
 
-		self.reinit = wParticles.reinit
+		self.reinitList.append(wParticles.reinit)
 
 		if len(self.particlesAdded) == len(self.registered):
 			self.resample()
@@ -111,8 +115,17 @@ class Node(object):
 				if particle[0] == toSend[j][0]:
 					toSend[j].append(particle[1])
 
+		self.reinit = True
+
+		if not self.mapAdded:
+			for i in range (0, len(self.reinitList)):
+				if self.reinitList[i] == False:
+					self.reinit = False
+				break
+		
+
 		for i in range(0, len(toSend)):
-			time.sleep(0.1)
+			time.sleep(0.075)
 			name = toSend[i][0]
 			if len(toSend[i]) <= 1:
 				list = []
@@ -124,7 +137,8 @@ class Node(object):
 		self.particleWT = []
 		self.particlesAdded = []
 		self.totalWeight = 0
-		self.reinit = False
+		self.reinitList = []
+		self.mapAdded = False
 
 		self.lock.release()
 
@@ -134,7 +148,8 @@ class Node(object):
 		particles.particles.header.stamp = rospy.get_rostime()
 		particles.particles.header.frame_id = map_topic
 		particles.particles.poses = plist
-		if self.ftype == "amcl":
+		#print(self.reinit)
+		if self.ftype == "amcl" or self.mapAdded:
 			particles.reinit = self.reinit
 		else:
 			particles.reinit = False
