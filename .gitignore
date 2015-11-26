@@ -1,5 +1,5 @@
 # Temporary text editor files
-*.~
+*~
 
 # Mac OS X temp files
 *.DS_Store
