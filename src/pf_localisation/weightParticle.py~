@@ -24,8 +24,8 @@ class weightParticle():
 	"""	
 	def p(self, po):
 		lock.acquire()
-		return po+1
 		lock.release()
+		return po+1
 
 	def init(self, l, t, m):
 		global lock
@@ -53,3 +53,7 @@ class weightParticle():
 #		self.particleWeights = p.map(self.p, particles)
 #		self.totalWeight = tot.value
 #		self.maximumWeight = maxi.value
+		if self.maximumWeight < 8:
+			self.exploded = True
+		else:
+			self.exploded = False

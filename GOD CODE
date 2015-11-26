@@ -1,2 +1,0 @@
-g++ main.cpp image_loader.cpp -o map_server2 -I/opt/ros/hydro/include -L/opt/ros/hydro/lib -Wl,-rpath,/opt/ros/hydro/lib -lroscpp -lrosconsole -lrostime -L. /opt/ros/hydro/lib/libroscpp_serialization.so -I/usr/local/include -L/usr/local/lib -lyaml-cpp -L/usr/local/lib -lSDLmain -lSDL -lSDL_image
-
