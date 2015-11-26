@@ -52,6 +52,7 @@ class Node(object):
 		elif not nFound and not reg.toAdd:
 			del self.registered[pos]
 			rospy.loginfo("\tDEREGISTERED: " + reg.frame_id)
+			self.mapAdded = True
 			
 			if len(self.particlesAdded) == len(self.registered):
 				self.resample()
@@ -96,6 +97,8 @@ class Node(object):
 		
 
 	def resample(self):
+
+		rospy.loginfo("PARTICLES RECIEVED: " + str(len(self.particleWT)))
 		
 		particles = None
 		if self.ftype == "kld":
@@ -105,7 +108,17 @@ class Node(object):
 		else:
 			rospy.logError("ERROR IN TYPE OF RESAMPLE")
 		
-		particles = []
+		toSend = []
+		for i in range(0, len(self.registered)):
+			toAdd = []
+			toAdd.append(self.registered[i][0])
+			toSend.append(toAdd)
+
+		for i in range (0, len(particles)):
+			particle = particles[i]
+			for j in range(0, len(toSend)):
+				if particle[0] == toSend[j][0]:
+					toSend[j].append(particle[1])
 
 		self.reinit = True
 
@@ -114,6 +127,8 @@ class Node(object):
 				if self.reinitList[i] == False:
 					self.reinit = False
 				break
+
+		self.count = 0
 		
 
 		for i in range(0, len(toSend)):
@@ -125,6 +140,8 @@ class Node(object):
 				list = toSend[i]
 				del list[0]
 			self.send(name,list)
+
+		rospy.loginfo("LENGTH FROM MASTER: " + str(self.count))
 
 		self.particleWT = []
 		self.particlesAdded = []
@@ -140,11 +157,11 @@ class Node(object):
 		particles.particles.header.stamp = rospy.get_rostime()
 		particles.particles.header.frame_id = map_topic
 		particles.particles.poses = plist
-		#print(self.reinit)
+		self.count = self.count + len(plist)
 		if self.ftype == "amcl" or self.mapAdded:
 			particles.reinit = self.reinit
 		else:
-			particles.reinit = False
+			particles.reinit = self.updater.reinit
 		self._cloud_publisher.publish(particles)
 
 rospy.init_node("master")

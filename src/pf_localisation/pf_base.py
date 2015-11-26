@@ -131,7 +131,7 @@ class PFLocaliserBase(object):
 			self.sensor_model.set_laser_scan_parameters(self.NUMBER_PREDICTED_READINGS, scan.range_max, len(scan.ranges), scan.angle_min, scan.angle_max)
 			self.sensor_model_initialised = True
 		with lock:
-			print("CALLED________________________________")
+			#print("CALLED________________________________")
 			t = time.time()
 			# Call user-implemented particle filter update method
 			#self.update_particle_cloud(scan)
@@ -156,22 +156,27 @@ class PFLocaliserBase(object):
 
 				resampledParticles = []
 				reinit = None
+				loop = True
 				try:
-					pArray = rospy.wait_for_message("/updatedCloud", Particles, 5)
-					#rospy.loginfo("\tRECEIVED MESSAGE TO: " + pArray.particles.header.frame_id)
-					if pArray.particles.header.frame_id == map_topic:
-						loop = False
-						resampledParticles = pArray.particles.poses
-						reinit = pArray.reinit
-						if reinit:
-							self.particlecloud = self.reinitialise_cloud(self.estimatedpose.pose.pose, 0, False)
-						else:
-							self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
-							self.particlecloud.header.frame_id = map_topic
+					while loop:
+						pArray = rospy.wait_for_message("/updatedCloud", Particles, 5)
+						#rospy.loginfo("\tRECEIVED MESSAGE TO: " + pArray.particles.header.frame_id)
+						rospy.loginfo("MAP_TOPIC: " + map_topic)
+						rospy.loginfo("RECEIVED: " + pArray.particles.header.frame_id)
+						if pArray.particles.header.frame_id == map_topic:
+							loop = False
+							resampledParticles = pArray.particles.poses
+							rospy.loginfo("LENGTH FROM BASE: " + str(len(resampledParticles)))
+							reinit = pArray.reinit
+							if reinit:
+								self.particlecloud = self.reinitialise_cloud(self.estimatedpose.pose.pose, 0, False)
+							else:
+								self.particlecloud = self.cloud.smudge_amcl(resampledParticles)
 						
 				except:
 					rospy.loginfo("TIMED OUT WAITING FOR MESSAGE")
 
+			self.particlecloud.header.frame_id = map_topic
 			self.estimatedpose.pose.pose = self.estimate_pose()
 						
 			# Publish the estimated pose
