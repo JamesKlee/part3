@@ -178,7 +178,7 @@ class PFLocaliserBase(object):
 			floorName = self.floorName
 			estimatedPose = self.estimatedpose.pose.pose
 			largestClusterSize = self.estimate.dbscan_largestclustersize()
-			self.clusterTask.publish(floorName, estimatedPose, largestClusterSize, numParticles)
+			self.clusterTask.publish(floorName, estimatedPose, largestClusterSize, len(self.particlecloud.poses))
 			currentTime = rospy.Time.now()
 						
 			# Given new estimated pose, now work out the new transform
