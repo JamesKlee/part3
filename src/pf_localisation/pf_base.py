@@ -160,13 +160,9 @@ class PFLocaliserBase(object):
 				try:
 					while loop:
 						pArray = rospy.wait_for_message("/updatedCloud", Particles, 5)
-						#rospy.loginfo("\tRECEIVED MESSAGE TO: " + pArray.particles.header.frame_id)
-						rospy.loginfo("MAP_TOPIC: " + map_topic)
-						rospy.loginfo("RECEIVED: " + pArray.particles.header.frame_id)
 						if pArray.particles.header.frame_id == map_topic:
 							loop = False
 							resampledParticles = pArray.particles.poses
-							rospy.loginfo("LENGTH FROM BASE: " + str(len(resampledParticles)))
 							reinit = pArray.reinit
 							if reinit:
 								self.particlecloud = self.reinitialise_cloud(self.estimatedpose.pose.pose, 0, False)

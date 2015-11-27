@@ -237,78 +237,79 @@ class UpdateParticleCloud():
 		M = 0
 		Mx = 0
 
-		#Initialising the bins
-		for i in range(0, len(self.mapInfo)):
-			listFreePoints = self.mapInfo[i][1]
+		if numParticles > 0:
 
-			for j in range(0,len(listFreePoints), 5):
-				currentCell = listFreePoints[j]
-				topic = self.mapInfo[i][0]
-				cellX = currentCell.x
-				cellY = currentCell.y
-				valueBin = False
-				binsDict[(topic, cellX, cellY)] = [False,0]
-				maxSizeBin[topic] = 0	
-				binsSize = binsSize + 1
-
-		while ((M < Mx or M < Mmin) and not self.reinit) :
-			#Get Sample
-			notAccepted = True
-			value = random.random() * tWeight
-			total = 0.0
-			for j in range(0, numParticles):
-				particle = particleWT[j]
-				total = total + particle[2]
-				if value <= total:
-					break
-			
-			curr_sample = (particle[0], particle[1])
-			resampledPoses.append(curr_sample)
-			M = M + 1
-
-			#Convert Coodinates of the Pose to know if the bin is Empty or not
-			xBin = -1
-			yBin = -1
-			for i in range(0,len(self.mapInfo)) :
-				if (particle[0] == self.mapInfo[i][0]):
-					mapResolution = self.mapInfo[i][2]
-					xBin = int(curr_sample[1].position.x / mapResolution)
-					yBin = int(curr_sample[1].position.y / mapResolution)
-					break
-
-			if ((curr_sample[0], xBin, yBin) in binsDict):
-				#rospy.loginfo("Hello")
-				binsDict[(curr_sample[0], xBin, yBin)][1] = binsDict[(curr_sample[0], xBin, yBin)][1] + 1
-				#Define the largest bin for each map
-				if binsDict[(curr_sample[0], xBin, yBin)][1] > maxSizeBin[curr_sample[0]]:
-					maxSizeBin[curr_sample[0]] = binsDict[(curr_sample[0], xBin, yBin)][1]
-				if (binsDict[(curr_sample[0], xBin, yBin)][0] == False):
-					binsDict[(curr_sample[0], xBin, yBin)][0] = True
-
-					k = k + 1
-					if (k > 1):
-						Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
-						#print("Mx: " + str(Mx))
-						if Mx > 300:
-							self.reinit = True
-						elif Mx > 200:
-							Mx = 200
-						
-	
-		if not self.reinit:
+			#Initialising the bins
 			for i in range(0, len(self.mapInfo)):
 				listFreePoints = self.mapInfo[i][1]
-				for j in range(0,int(Mx), 15):
-					randUninform = int(random.uniform(0,len(listFreePoints)-1))
-					coordinates = listFreePoints[randUninform]
-					xNewPose = coordinates.x * self.mapInfo[i][2]
-					yNewPose = coordinates.y * self.mapInfo[i][2]
+
+				for j in range(0,len(listFreePoints), 5):
+					currentCell = listFreePoints[j]
+					topic = self.mapInfo[i][0]
+					cellX = currentCell.x
+					cellY = currentCell.y
+					valueBin = False
+					binsDict[(topic, cellX, cellY)] = [False,0]
+					maxSizeBin[topic] = 0	
+					binsSize = binsSize + 1
+
+			while ((M < Mx or M < Mmin) and not self.reinit) :
+				#Get Sample
+				notAccepted = True
+				value = random.random() * tWeight
+				total = 0.0
+				for j in range(0, numParticles):
+					particle = particleWT[j]
+					total = total + particle[2]
+					if value <= total:
+						break
 			
-					#newPose Parameters
-					newPose  = Pose()
-					newPose.position.x = xNewPose
-					newPose.position.y = yNewPose
-					newPose.orientation = rotateQuaternion(createQuaternion(0), random.uniform(-math.pi, math.pi))
-					resampledPoses.append((self.mapInfo[i][0], newPose))
-		rospy.loginfo("LENGTH FROM UPDATE: " + str(len(resampledPoses)))
+				curr_sample = (particle[0], particle[1])
+				resampledPoses.append(curr_sample)
+				M = M + 1
+
+				#Convert Coodinates of the Pose to know if the bin is Empty or not
+				xBin = -1
+				yBin = -1
+				for i in range(0,len(self.mapInfo)) :
+					if (particle[0] == self.mapInfo[i][0]):
+						mapResolution = self.mapInfo[i][2]
+						xBin = int(curr_sample[1].position.x / mapResolution)
+						yBin = int(curr_sample[1].position.y / mapResolution)
+						break
+
+				if ((curr_sample[0], xBin, yBin) in binsDict):
+					#rospy.loginfo("Hello")
+					binsDict[(curr_sample[0], xBin, yBin)][1] = binsDict[(curr_sample[0], xBin, yBin)][1] + 1
+					#Define the largest bin for each map
+					if binsDict[(curr_sample[0], xBin, yBin)][1] > maxSizeBin[curr_sample[0]]:
+						maxSizeBin[curr_sample[0]] = binsDict[(curr_sample[0], xBin, yBin)][1]
+					if (binsDict[(curr_sample[0], xBin, yBin)][0] == False):
+						binsDict[(curr_sample[0], xBin, yBin)][0] = True
+
+						k = k + 1
+						if (k > 1):
+							Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
+							#print("Mx: " + str(Mx))
+							if Mx > 250:
+								self.reinit = True
+							elif Mx > 180:
+								Mx = 180
+						
+	
+			if not self.reinit:
+				for i in range(0, len(self.mapInfo)):
+					listFreePoints = self.mapInfo[i][1]
+					for j in range(0,int(Mx), 10):
+						randUninform = int(random.uniform(0,len(listFreePoints)-1))
+						coordinates = listFreePoints[randUninform]
+						xNewPose = coordinates.x * self.mapInfo[i][2]
+						yNewPose = coordinates.y * self.mapInfo[i][2]
+			
+						#newPose Parameters
+						newPose  = Pose()
+						newPose.position.x = xNewPose
+						newPose.position.y = yNewPose
+						newPose.orientation = rotateQuaternion(createQuaternion(0), random.uniform(-math.pi, math.pi))
+						resampledPoses.append((self.mapInfo[i][0], newPose))
 		return resampledPoses

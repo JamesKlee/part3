@@ -141,8 +141,6 @@ class Node(object):
 				del list[0]
 			self.send(name,list)
 
-		rospy.loginfo("LENGTH FROM MASTER: " + str(self.count))
-
 		self.particleWT = []
 		self.particlesAdded = []
 		self.totalWeight = 0
