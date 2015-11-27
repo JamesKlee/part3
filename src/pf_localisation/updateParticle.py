@@ -13,6 +13,9 @@ class UpdateParticleCloud():
 	totalWeight = 0.0
 	maxWeight = 0.0
 	particleWeights = []
+
+	def __init__(self):
+		self.reinit = False
 	
 	#Weights all of the particles in the particle cloud
 	def weight_particles(self, scan, pf):
@@ -182,26 +185,31 @@ class UpdateParticleCloud():
 		return pArray
 
 	def resample_amcl(self, particleWT, tWeight):
+		
+		resampledPoses = self.resample_roulette(particleWT, tWeight)
+
+		return resampledPoses
+
+	def resample_roulette(self, particleWT, tWeight):
 		#particleWT[i][0] is the map_topic associated with the particle
 		#particleWT[i][1] is the particle
 		#particleWT[i][2] is the weight associated with the particle 
 		numParticles = len(particleWT)
 			
 		resampledPoses = []
-		index = 0
-		notAccepted = True
-	
-		#Resample the poses
+
 		for i in range(0,numParticles):
-			notAccepted = True
-			while (notAccepted):
-				index = random.randint(0,numParticles-1)
-				particle = particleWT[index]
-				if (random.uniform(0,1) < particle[2]/tWeight):
-					notAccepted = False
-			resampledPose = (particle[0], particle[1])
-			resampledPoses.append(resampledPose)
-		return resampledPoses
+			value = random.random() * tWeight
+			total = 0.0
+			for j in range(0, numParticles):
+				particle = particleWT[j]
+				total = total + particle[2]
+				if value <= total:
+					resampledPose = (particle[0], particle[1])
+					resampledPoses.append(resampledPose)
+					break
+					
+				
 
 	#Updates particles according to KLD-AMCL
 	def resample_kld(self, particleWT, tWeight):
@@ -212,6 +220,7 @@ class UpdateParticleCloud():
 		#self.mapInfo[i][1] is the listFreePoints
 		#self.mapInfo[i][2] is the resolution of the map associated with listFreePoints
 		numParticles = len(particleWT)
+		self.reinit = False
 		index = 0
 		notAccepted = True
 		listFreePoints = []
@@ -242,14 +251,16 @@ class UpdateParticleCloud():
 				maxSizeBin[topic] = 0	
 				binsSize = binsSize + 1
 
-		while (M < Mx or M < Mmin) :
+		while ((M < Mx or M < Mmin) and not self.reinit) :
 			#Get Sample
 			notAccepted = True
-			while (notAccepted):
-				index = random.randint(0,numParticles-1)
-				particle = particleWT[index]
-				if (random.random() < particle[2]/tWeight):
-					notAccepted = False
+			value = random.random() * tWeight
+			total = 0.0
+			for j in range(0, numParticles):
+				particle = particleWT[j]
+				total = total + particle[2]
+				if value <= total:
+					break
 			
 			curr_sample = (particle[0], particle[1])
 			resampledPoses.append(curr_sample)
@@ -277,22 +288,27 @@ class UpdateParticleCloud():
 					k = k + 1
 					if (k > 1):
 						Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
-						if Mx > 200:
+						#print("Mx: " + str(Mx))
+						if Mx > 300:
+							self.reinit = True
+						elif Mx > 200:
 							Mx = 200
-		
-		for i in range(0, len(self.mapInfo)):
-			listFreePoints = self.mapInfo[i][1]
-			for j in range(0,int(Mx), 10):
-				randUninform = int(random.uniform(0,len(listFreePoints)-1))
-				coordinates = listFreePoints[randUninform]
-				xNewPose = coordinates.x * self.mapInfo[i][2]
-				yNewPose = coordinates.y * self.mapInfo[i][2]
+						
+	
+		if not self.reinit:
+			for i in range(0, len(self.mapInfo)):
+				listFreePoints = self.mapInfo[i][1]
+				for j in range(0,int(Mx), 15):
+					randUninform = int(random.uniform(0,len(listFreePoints)-1))
+					coordinates = listFreePoints[randUninform]
+					xNewPose = coordinates.x * self.mapInfo[i][2]
+					yNewPose = coordinates.y * self.mapInfo[i][2]
 			
-				#newPose Parameters
-				newPose  = Pose()
-				newPose.position.x = xNewPose
-				newPose.position.y = yNewPose
-				newPose.orientation = rotateQuaternion(createQuaternion(0), random.uniform(-math.pi, math.pi))
-				resampledPoses.append((self.mapInfo[i][0], newPose))
-		
+					#newPose Parameters
+					newPose  = Pose()
+					newPose.position.x = xNewPose
+					newPose.position.y = yNewPose
+					newPose.orientation = rotateQuaternion(createQuaternion(0), random.uniform(-math.pi, math.pi))
+					resampledPoses.append((self.mapInfo[i][0], newPose))
+		rospy.loginfo("LENGTH FROM UPDATE: " + str(len(resampledPoses)))
 		return resampledPoses

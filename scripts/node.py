@@ -153,6 +153,7 @@ class ParticleFilterLocalisationNode(object):
         
                 	# Get updated particle cloud and publish it
 			self._particle_filter.particlecloud.header.frame_id = map_topic
+			rospy.loginfo("PARTICLES IN CLOUD: " + str(len(self._particle_filter.particlecloud.poses)))
                 	self._cloud_publisher.publish(self._particle_filter.particlecloud)
         
                 	# Get updated transform and publish it
