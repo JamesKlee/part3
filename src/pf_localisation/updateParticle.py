@@ -111,6 +111,7 @@ class UpdateParticleCloud():
 		for i in range(0, len(pf.particlecloud.poses)):
 			temp.append((pf.floorName, pf.particlecloud.poses[i], pf.weights[i]))
 		
+				
 		resampledPoses = self.resample_amcl(temp, pf.totalWeight)
 		
 		temp = []
@@ -208,6 +209,7 @@ class UpdateParticleCloud():
 					resampledPose = (particle[0], particle[1])
 					resampledPoses.append(resampledPose)
 					break
+		return resampledPoses
 					
 				
 

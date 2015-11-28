@@ -84,7 +84,7 @@ class InitialiseCloud():
 		poseArray.header.stamp = rospy.Time.now()
 		listFreePoints = pf.listFreePoints
 
-		pixelGap = 18
+		pixelGap = 20
 
 		for m in range(0, len(listFreePoints), pixelGap):
 			coordinates = listFreePoints[m]

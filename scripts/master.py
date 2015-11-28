@@ -132,7 +132,7 @@ class Node(object):
 		
 
 		for i in range(0, len(toSend)):
-			time.sleep(0.075)
+			time.sleep(0.1)
 			name = toSend[i][0]
 			if len(toSend[i]) <= 1:
 				list = []

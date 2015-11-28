@@ -24,12 +24,12 @@ class PFLocaliser(PFLocaliserBase):
 
 	#Updates the particle 
 	def update_particle_cloud(self, scan):
-		self.particlecloud = self.cloud.update_kld(scan, self)
+		self.particlecloud = self.cloud.update_amcl(scan, self)
 
 	#Initialise particle cloud
 	def initialise_particle_cloud(self, initialpose):			
 		#return init.gauss_initialise(initialpose.pose.pose, M, 6, True, self, False)
-		return self.init.equal_initialise(initialpose.pose.pose, self.num, self)
+		return self.init.uniform_initialise(initialpose.pose.pose, self.num, self)
 
 	#Estimate the pose
 	def estimate_pose(self):
@@ -38,4 +38,4 @@ class PFLocaliser(PFLocaliserBase):
 	#Reinitialise the cloud in AMCL
 	def reinitialise_cloud(self, initialpose, ratio, random):
 		#return init.gauss_initialise(initialpose, M, ratio, random, self, False)
-		return self.init.equal_initialise(initialpose, self.num, self)
+		return self.init.uniform_initialise(initialpose, self.num, self)
