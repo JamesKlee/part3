@@ -159,9 +159,9 @@ class PFLocaliserBase(object):
 				loop = True
 				try:
 					while loop:
-						pArray = rospy.wait_for_message("/updatedCloud", Particles, 1)
-						rospy.loginfo("MESSAGE FROM: " + pArray.particles.header.frame_id)
-						rospy.loginfo("EXPECTED: " + map_topic)
+						pArray = rospy.wait_for_message("/updatedCloud", Particles, 2)
+						#rospy.loginfo("MESSAGE FROM: " + pArray.particles.header.frame_id)
+						#rospy.loginfo("EXPECTED: " + map_topic)
 						if pArray.particles.header.frame_id == map_topic:
 							loop = False
 							resampledParticles = pArray.particles.poses
