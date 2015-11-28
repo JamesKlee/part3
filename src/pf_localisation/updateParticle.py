@@ -155,7 +155,7 @@ class UpdateParticleCloud():
 			count = 0
 			
 			# TEST this value, rounding scalar
-			scale = 0.66
+			scale = 0.75
 	
 			while cont:
 				temp = []
@@ -321,7 +321,7 @@ class UpdateParticleCloud():
 						if (k > 1):
 							Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
 							print("Mx: " + str(Mx))
-							if Mx > 500:
+							if Mx > 375:
 								self.reinit = True
 							if Mx > 200:
 								Mx = 200
@@ -335,7 +335,7 @@ class UpdateParticleCloud():
 			if not self.reinit:
 				for i in range(0, len(self.mapInfo)):
 					listFreePoints = self.mapInfo[i][1]
-					for j in range(0,int(Mx), 10):
+					for j in range(0,int(Mx), 8):
 						randUninform = int(random.uniform(0,len(listFreePoints)-1))
 						coordinates = listFreePoints[randUninform]
 						xNewPose = coordinates.x * self.mapInfo[i][2]
