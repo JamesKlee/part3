@@ -56,4 +56,4 @@ class weightParticle():
 		if self.maximumWeight < 8:
 			self.exploded = True
 		else:
-			self.exploded = False
+			exploded.self = False

@@ -24,7 +24,8 @@ class PFLocaliser(PFLocaliserBase):
 
 	#Updates the particle 
 	def update_particle_cloud(self, scan):
-		self.particlecloud = self.cloud.update_amcl(scan, self)
+		self.cloud.reinit = False
+		self.particlecloud = self.cloud.update_kld(scan, self)
 
 	#Initialise particle cloud
 	def initialise_particle_cloud(self, initialpose):			

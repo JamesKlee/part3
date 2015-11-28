@@ -146,6 +146,7 @@ class Node(object):
 		self.totalWeight = 0
 		self.reinitList = []
 		self.mapAdded = False
+		self.updater.reinit = False
 
 		self.lock.release()
 

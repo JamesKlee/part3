@@ -17,6 +17,15 @@ def cluster_callback(c):
 	if not posterior.has_key(floor):
 		posterior[floor] = 0.5
 
+def normalise(d):
+	total = 0.0
+
+	for (k, v) in d.items():
+		total += v
+
+	for (k, v) in d.items():
+		d[k] /= total
+
 def main():
 	rospy.init_node("cluster_decider")
 	rospy.Subscriber("cluster", Cluster, cluster_callback)
@@ -24,17 +33,18 @@ def main():
 	rate = rospy.Rate(2) # 2hz
 	
 	while not rospy.is_shutdown():
-		total = 0
-		
+		# multiply by the previous probability
 		for (floor, val) in posterior.items():
-			# multiply by the previous probability
 			posterior[floor] *= likelihood[floor]
-			total += posterior[floor]
 		
-		# normalise the posterior
+		normalise(posterior)
+
+		# limit the certainty
 		for (floor, val) in posterior.items():
-			posterior[floor] /= total
-		
+			posterior[floor] = max(posterior[floor], 0.01)
+
+		normalise(posterior)
+
 		# get the floor with the largest probability
 		if len(posterior):
 			print("")

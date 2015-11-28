@@ -104,21 +104,23 @@ class UpdateParticleCloud():
 
 	#Updates particles according to AMCL
 	def update_amcl(self, scan, pf):
-
+		self.reinit = False
 		self.weight_particles(scan, pf)
 		
 		temp = []
 		for i in range(0, len(pf.particlecloud.poses)):
 			temp.append((pf.floorName, pf.particlecloud.poses[i], pf.weights[i]))
+
+		if self.reinit:
+			return pf.init.reinitialise_cloud(pf.estimatedpose.pose.pose, 0, False)
+		else:
+			resampledPoses = self.resample_amcl(temp, pf.totalWeight)
 		
-				
-		resampledPoses = self.resample_amcl(temp, pf.totalWeight)
-		
-		temp = []
-		for i in range(0, len(resampledPoses)):
-			temp.append(resampledPoses[i][1])
+			temp = []
+			for i in range(0, len(resampledPoses)):
+				temp.append(resampledPoses[i][1])
 	
-		return self.smudge_amcl(temp)
+			return self.smudge_amcl(temp)
 
 	#Updates particles according to KLD-AMCL
 	def update_kld(self, scan, pf):
@@ -130,12 +132,16 @@ class UpdateParticleCloud():
 			temp.append((pf.floorName, pf.particlecloud.poses[i], pf.weights[i]))
 		
 		resampledPoses = self.resample_kld(temp, pf.totalWeight)
-		
-		temp = []
-		for i in range(0, len(resampledPoses)):
-			temp.append(resampledPoses[i][1])
+
+		if self.reinit:
+			return pf.reinitialise_cloud(pf.estimatedpose.pose.pose, 0, False)
+
+		else:
+			temp = []
+			for i in range(0, len(resampledPoses)):
+				temp.append(resampledPoses[i][1])
 	
-		return self.smudge_amcl(temp)
+			return self.smudge_amcl(temp)
 
 	def smudge_amcl(self, resampledPoses):
 				
@@ -173,9 +179,9 @@ class UpdateParticleCloud():
 				for i in range(0, count):
 					if i > 0:
 						newPose = Pose()
-						newPose.position.x = random.gauss(val.position.x, 0.35) #TEST THIS
-						newPose.position.y = random.gauss(val.position.y, 0.35) #TEST THIS
-						newPose.orientation = rotateQuaternion(val.orientation, random.vonmisesvariate(0, 5)) #TEST THIS
+						newPose.position.x = random.gauss(val.position.x, 0.3) #TEST THIS
+						newPose.position.y = random.gauss(val.position.y, 0.3) #TEST THIS
+						newPose.orientation = rotateQuaternion(val.orientation, random.vonmisesvariate(0, 4)) #TEST THIS
 						pArray.poses.append(newPose)
 						
 					else:
@@ -222,20 +228,20 @@ class UpdateParticleCloud():
 		#self.mapInfo[i][1] is the listFreePoints
 		#self.mapInfo[i][2] is the resolution of the map associated with listFreePoints
 		numParticles = len(particleWT)
-		self.reinit = False
 		index = 0
 		notAccepted = True
 		listFreePoints = []
 		resampledPoses = []
 
 		#Initialize KLD Sampling
-		zvalue = 2.1
+		zvalue = 1.9
 		binsDict = {}
+		foundDict = {}
 		maxSizeBin = {}
 		binsSize = 0
 		k = 0 #Number of Bins not empty
-		epsilon = 0.05
-		Mmin = 50
+		epsilon = 0.1
+		Mmin = 75
 		M = 0
 		Mx = 0
 
@@ -244,27 +250,37 @@ class UpdateParticleCloud():
 			#Initialising the bins
 			for i in range(0, len(self.mapInfo)):
 				listFreePoints = self.mapInfo[i][1]
+				binsDict[self.mapInfo[i][0]] = 0
 
-				for j in range(0,len(listFreePoints), 5):
+				pixelGap = 2
+
+				for j in range(0,len(listFreePoints), pixelGap):
 					currentCell = listFreePoints[j]
-					topic = self.mapInfo[i][0]
-					cellX = currentCell.x
 					cellY = currentCell.y
-					valueBin = False
-					binsDict[(topic, cellX, cellY)] = [False,0]
-					maxSizeBin[topic] = 0	
-					binsSize = binsSize + 1
+
+					if cellY % pixelGap == 0:			
+						cellX = currentCell.x
+						topic = self.mapInfo[i][0]
+						valueBin = False
+						binsDict[(topic, cellX, cellY)] = [False,0]
+						maxSizeBin[topic] = 0	
+						binsSize = binsSize + 1
 
 			while ((M < Mx or M < Mmin) and not self.reinit) :
 				#Get Sample
 				notAccepted = True
-				value = random.random() * tWeight
-				total = 0.0
-				for j in range(0, numParticles):
-					particle = particleWT[j]
-					total = total + particle[2]
-					if value <= total:
-						break
+				while notAccepted:
+					value = random.random() * tWeight
+					total = 0.0
+					for j in range(0, numParticles):
+						particle = particleWT[j]
+						total = total + particle[2]
+						if value <= total:
+							nm = particle[0]
+							binsDict[nm] += 1
+							if binsDict[nm] <= 200 or len(self.mapInfo) == 1:
+								notAccepted = False
+								break
 			
 				curr_sample = (particle[0], particle[1])
 				resampledPoses.append(curr_sample)
@@ -277,8 +293,12 @@ class UpdateParticleCloud():
 					if (particle[0] == self.mapInfo[i][0]):
 						mapResolution = self.mapInfo[i][2]
 						xBin = int(curr_sample[1].position.x / mapResolution)
+						xBin = self.base_round(xBin, pixelGap)
 						yBin = int(curr_sample[1].position.y / mapResolution)
+						yBin = self.base_round(yBin, pixelGap)
 						break
+
+				
 
 				if ((curr_sample[0], xBin, yBin) in binsDict):
 					#rospy.loginfo("Hello")
@@ -293,10 +313,10 @@ class UpdateParticleCloud():
 						if (k > 1):
 							Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
 							#print("Mx: " + str(Mx))
-							if Mx > 250:
+							if Mx > 500:
 								self.reinit = True
-							elif Mx > 180:
-								Mx = 180
+							if Mx > 150:
+								Mx = 150
 						
 	
 			if not self.reinit:
@@ -314,4 +334,9 @@ class UpdateParticleCloud():
 						newPose.position.y = yNewPose
 						newPose.orientation = rotateQuaternion(createQuaternion(0), random.uniform(-math.pi, math.pi))
 						resampledPoses.append((self.mapInfo[i][0], newPose))
+
+		rospy.loginfo("BROKEN FROM LOOP")
 		return resampledPoses
+
+	def base_round(self, val, base):
+    		return int(base * round(float(val)/base))
