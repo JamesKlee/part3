@@ -320,7 +320,7 @@ class UpdateParticleCloud():
 						k = k + 1
 						if (k > 1):
 							Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
-							#print("Mx: " + str(Mx))
+							print("Mx: " + str(Mx))
 							if Mx > 500:
 								self.reinit = True
 							if Mx > 200:

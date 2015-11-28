@@ -98,7 +98,7 @@ class Node(object):
 
 	def resample(self):
 
-		rospy.loginfo("PARTICLES RECIEVED: " + str(len(self.particleWT)))
+		#rospy.loginfo("PARTICLES RECIEVED: " + str(len(self.particleWT)))
 		
 		particles = None
 		if self.ftype == "kld":
@@ -132,7 +132,7 @@ class Node(object):
 		
 
 		for i in range(0, len(toSend)):
-			time.sleep(0.1)
+			time.sleep(0.1 * len(self.registered))
 			name = toSend[i][0]
 			if len(toSend[i]) <= 1:
 				list = []
