@@ -17,8 +17,8 @@ def cluster_callback(c):
 def normalise(d):
 	total = 0.0
 
-	for k, v in d:
-		total += v
+	for k in d:
+		total += d[k]
 
 	for k in d:
 		d[k] /= total
