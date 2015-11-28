@@ -138,7 +138,7 @@ class PFLocaliserBase(object):
 
 			#SERVER CODE
 			if self.asynchronous: 
-				self.update_particle_cloud(scan)	
+				self.update_particle_cloud(scan)
 			else:
 				self.cloud.weight_particles(scan, self)
 				# Get particle cloud and weights and publish it
@@ -159,14 +159,12 @@ class PFLocaliserBase(object):
 				loop = True
 				try:
 					while loop:
-						pArray = rospy.wait_for_message("/updatedCloud", Particles, 5)
-						#rospy.loginfo("\tRECEIVED MESSAGE TO: " + pArray.particles.header.frame_id)
-						rospy.loginfo("MAP_TOPIC: " + map_topic)
-						rospy.loginfo("RECEIVED: " + pArray.particles.header.frame_id)
+						pArray = rospy.wait_for_message("/updatedCloud", Particles, 2)
+						rospy.loginfo("MESSAGE FROM: " + pArray.particles.header.frame_id)
+						rospy.loginfo("EXPECTED: " + map_topic)
 						if pArray.particles.header.frame_id == map_topic:
 							loop = False
 							resampledParticles = pArray.particles.poses
-							rospy.loginfo("LENGTH FROM BASE: " + str(len(resampledParticles)))
 							reinit = pArray.reinit
 							if reinit:
 								self.particlecloud = self.reinitialise_cloud(self.estimatedpose.pose.pose, 0, False)

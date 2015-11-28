@@ -132,7 +132,7 @@ class Node(object):
 		
 
 		for i in range(0, len(toSend)):
-			time.sleep(0.075)
+			time.sleep(0.1)
 			name = toSend[i][0]
 			if len(toSend[i]) <= 1:
 				list = []
@@ -141,13 +141,12 @@ class Node(object):
 				del list[0]
 			self.send(name,list)
 
-		rospy.loginfo("LENGTH FROM MASTER: " + str(self.count))
-
 		self.particleWT = []
 		self.particlesAdded = []
 		self.totalWeight = 0
 		self.reinitList = []
 		self.mapAdded = False
+		self.updater.reinit = False
 
 		self.lock.release()
 
