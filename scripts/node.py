@@ -45,7 +45,7 @@ class ParticleFilterLocalisationNode(object):
 		signal.signal(signal.SIGINT, self.intHandler)
 
 		#PARTICLES
-		self.numParticles = 250
+		self.numParticles = 300
 		self.lock = Lock()
 
 

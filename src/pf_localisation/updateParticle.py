@@ -92,9 +92,9 @@ class UpdateParticleCloud():
 			for i in range(0, count):
 				if i > 0:
 					newPose = Pose()
-					newPose.position.x = random.gauss(val.position.x, 0.3) #TEST THIS
-					newPose.position.y = random.gauss(val.position.y, 0.3)
-					newPose.orientation = rotateQuaternion(val.orientation, random.vonmisesvariate(0, 4))
+					newPose.position.x = random.gauss(val.position.x, 0.35) #TEST THIS
+					newPose.position.y = random.gauss(val.position.y, 0.35)
+					newPose.orientation = rotateQuaternion(val.orientation, random.vonmisesvariate(0, 7))
 					 #MAKE SURE TO TEST
 					pArray.poses.append(newPose)
 					
@@ -180,9 +180,9 @@ class UpdateParticleCloud():
 				for i in range(0, count):
 					if i > 0:
 						newPose = Pose()
-						newPose.position.x = random.gauss(val.position.x, 0.3) #TEST THIS
-						newPose.position.y = random.gauss(val.position.y, 0.3) #TEST THIS
-						newPose.orientation = rotateQuaternion(val.orientation, random.vonmisesvariate(0, 4)) #TEST THIS
+						newPose.position.x = random.gauss(val.position.x, 0.15) #TEST THIS
+						newPose.position.y = random.gauss(val.position.y, 0.15) #TEST THIS
+						newPose.orientation = rotateQuaternion(val.orientation, random.vonmisesvariate(0, 7)) #TEST THIS
 						pArray.poses.append(newPose)
 						
 					else:
@@ -242,7 +242,7 @@ class UpdateParticleCloud():
 		binsSize = 0
 		k = 0 #Number of Bins not empty
 		epsilon = 0.1
-		Mmin = 75
+		Mmin = 50
 		Mmax = 200
 		M = 0
 		Mx = 0
@@ -320,11 +320,11 @@ class UpdateParticleCloud():
 						k = k + 1
 						if (k > 1):
 							Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
-							print("Mx: " + str(Mx))
-							if Mx > 375:
-								self.reinit = True
-							if Mx > 200:
-								Mx = 200
+							#print("Mx: " + str(Mx))
+							if Mx > 350 + 100 * len(self.mapInfo):
+								self.reinit = False
+							if Mx > 200 + 100 * len(self.mapInfo):
+								Mx = 200 + 100 * len(self.mapInfo)
 				
 				self.reachedMax = True
 				for key in mapsDict:
