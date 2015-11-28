@@ -16,6 +16,7 @@ class UpdateParticleCloud():
 
 	def __init__(self):
 		self.reinit = False
+		self.reachedMax = False
 	
 	#Weights all of the particles in the particle cloud
 	def weight_particles(self, scan, pf):
@@ -236,12 +237,13 @@ class UpdateParticleCloud():
 		#Initialize KLD Sampling
 		zvalue = 1.9
 		binsDict = {}
-		foundDict = {}
+		mapsDict = {}
 		maxSizeBin = {}
 		binsSize = 0
 		k = 0 #Number of Bins not empty
 		epsilon = 0.1
 		Mmin = 75
+		Mmax = 200
 		M = 0
 		Mx = 0
 
@@ -250,7 +252,7 @@ class UpdateParticleCloud():
 			#Initialising the bins
 			for i in range(0, len(self.mapInfo)):
 				listFreePoints = self.mapInfo[i][1]
-				binsDict[self.mapInfo[i][0]] = 0
+				mapsDict[self.mapInfo[i][0]] = [0, False]
 
 				pixelGap = 2
 
@@ -266,7 +268,9 @@ class UpdateParticleCloud():
 						maxSizeBin[topic] = 0	
 						binsSize = binsSize + 1
 
-			while ((M < Mx or M < Mmin) and not self.reinit) :
+			self.reachedMax = False
+
+			while (((M < Mx or M < (Mmin * len(self.mapInfo))) and (not self.reachedMax)) and (not self.reinit)) :
 				#Get Sample
 				notAccepted = True
 				while notAccepted:
@@ -277,10 +281,14 @@ class UpdateParticleCloud():
 						total = total + particle[2]
 						if value <= total:
 							nm = particle[0]
-							binsDict[nm] += 1
-							if binsDict[nm] <= 200 or len(self.mapInfo) == 1:
+							mapsDict[nm][0] += 1
+							#print(mapsDict[nm][0])
+							if mapsDict[nm][0] <= Mmax:
 								notAccepted = False
-								break
+
+								if mapsDict[nm][0] == Mmax:
+									mapsDict[nm][1] = True
+								break						
 			
 				curr_sample = (particle[0], particle[1])
 				resampledPoses.append(curr_sample)
@@ -314,9 +322,12 @@ class UpdateParticleCloud():
 							Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
 							#print("Mx: " + str(Mx))
 							if Mx > 500:
-								self.reinit = True
-							if Mx > 150:
-								Mx = 150
+								self.reinit = False
+				
+				self.reachedMax = True
+				for key in mapsDict:
+					if not mapsDict[key][1]:
+						self.reachedMax = False				
 						
 	
 			if not self.reinit:

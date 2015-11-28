@@ -162,6 +162,7 @@ class Node(object):
 		else:
 			particles.reinit = self.updater.reinit
 		self._cloud_publisher.publish(particles)
+		print("SENT")
 
 rospy.init_node("master")
 if len(sys.argv) != 2:
