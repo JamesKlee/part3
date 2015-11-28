@@ -322,7 +322,9 @@ class UpdateParticleCloud():
 							Mx = ((k-1)/(2*epsilon)) * math.pow(1 - (2/(9*(k-1))) + (math.sqrt(2/(9*(k-1)))*zvalue),3)
 							#print("Mx: " + str(Mx))
 							if Mx > 500:
-								self.reinit = False
+								self.reinit = True
+							if Mx > 200:
+								Mx = 200
 				
 				self.reachedMax = True
 				for key in mapsDict:
