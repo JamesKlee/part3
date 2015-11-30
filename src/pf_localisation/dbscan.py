@@ -19,6 +19,7 @@ def circularStddev(angles):
     stddev = math.sqrt(-math.log(s**2 + c**2))
     return stddev
 
+# An implementation DBSCAN
 class DBScan():
     NOT_VISITED, VISITED, NOISE = range(0, 3)
 
@@ -30,44 +31,50 @@ class DBScan():
         self.visited = []
         self.largestClusterSize = 0
 
-    # arguments :
-    #   eps : float => Max distance with the neighborhood of a Pose
-    #   minposes : float => Minimal number of Poses in the neighborhood of a Pose
     def run(self):
         self.visited = [self.NOT_VISITED] * len(self.points)
 
         for i in range(0, len(self.points)):
+            # Visit every particle once
             if self.visited[i] != self.NOT_VISITED:
                 continue
 
             self.visited[i] = self.VISITED
             point = self.points[i]
+
+            # Get the particles neighbours
             neighbours = self.regionQuery(point)
 
+            # Is the particle part of a cluster?
             if len(neighbours) < self.minposes:
                 self.visited[i] = self.NOISE
             else:
+                # Create a new cluster
                 currentCluster = set()
                 self.extendCluster(i, neighbours, currentCluster)
                 self.clusterlist.append(currentCluster)
 
+    # Find a cluster around a point
     def extendCluster(self, point, neighbours, cluster):
         cluster.add(point)
 
         while True:
             changed = False
-
+            
             for i in neighbours:
                 if self.visited[i] == self.NOT_VISITED:
                     self.visited[i] = self.VISITED
 
+                    # Get the particles neighbours
                     neighboursP = self.regionQuery(self.points[i])
-            
+                    
                     if len(neighboursP) >= self.minposes:
+                        # Merge neighbours with the cluster
                        neighbours = neighbours | neighboursP
                        changed = True
                        break
-                
+               
+                # Is this a new cluster?
                 isInAnyCluster = False
 
                 for cl in self.clusterlist:
@@ -77,7 +84,8 @@ class DBScan():
                 
                 if not isInAnyCluster:
                     cluster.add(i)
-                    
+            
+            # Iteratively find particles until there are no more
             if not changed:
                 break;
         
@@ -86,12 +94,13 @@ class DBScan():
     def regionQuery(self, referencePose):
         neighbours = set()
 
+        # Check distance against every other particle
         for i in range(0, len(self.points)):
+            # Calculate the distance between points
             dx = self.points[i].position.x - referencePose.position.x
             dy = self.points[i].position.y - referencePose.position.y
-
             dist = math.sqrt(math.pow(dx,2) + math.pow(dy,2))
-
+            
             if dist < self.eps:
                 neighbours.add(i)
 
@@ -121,6 +130,8 @@ class DBScan():
 
         return pose
 
+    # Calculate the standard deviation of
+    # particle orientation in a cluster
     def getStddev(self, cluster):
         radianList = []
 
@@ -129,13 +140,17 @@ class DBScan():
             
         return circularStddev(radianList)
 
+    # Find the most likely position given
+    # the result of DBSCAN
     def getguess(self, pf):
         clusterInfo = []
-        
+       
+        # Calculate the average position/orientation of each cluster
         for c in self.clusterlist:
             avg = Pose()
             avgOrientation = 0
-            
+           
+            # Total up positions/orientations
             for i in c:
                 avg.position.x += self.points[i].position.x
                 avg.position.y += self.points[i].position.y
@@ -162,18 +177,19 @@ class DBScan():
         # Keep only the largest clusters
         clusterInfo = filter(lambda x: x[1] == largestSize, clusterInfo)
         
-        # Just return a point if there are no clusters
+        # Give a point if there are no clusters
         if len(clusterInfo) == 0:
             self.largestClusterSize = 1
             
             if len(self.points) > 0:
-	            return self.points[0]
+	        return self.points[0]
             else:
-	            return Pose()
+                # Return a default pose
+                return Pose()
 	            
         self.largestClusterSize = largestSize
         
-        # A cluster is the largest
+        # Is there a single largest cluster?
         if len(clusterInfo) == 1:
             return clusterInfo[0][0]
         
