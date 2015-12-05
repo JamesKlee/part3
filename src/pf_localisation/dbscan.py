@@ -146,7 +146,7 @@ class DBScan():
 
     # Find the most likely position given
     # the result of DBSCAN
-    def getguess(self, pf):
+    def getguess(self):
         clusterInfo = []
        
         # Calculate the average position/orientation of each cluster
