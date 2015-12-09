@@ -37,8 +37,9 @@ class UpdateParticleCloud():
 		pf.weights = particleWeights
 		pf.maxWeight = maxWeight
 		pf.totalWeight = totalWeight
-		#if the maximum weighted particle has a weight below 7 reinitialise the particles
-		if pf.maxWeight < 7:
+		#if the maximum weighted particle has a weight below 3 reinitialise the particles
+		rospy.loginfo("MaxWeight: " + str(maxWeight))
+		if pf.maxWeight < 3.5:
 			pf.exploded = True
 		else:
 			pf.exploded = False
@@ -112,8 +113,8 @@ class UpdateParticleCloud():
 		for i in range(0, len(pf.particlecloud.poses)):
 			temp.append((pf.floorName, pf.particlecloud.poses[i], pf.weights[i]))
 
-		if self.reinit:
-			return pf.init.reinitialise_cloud(pf.estimatedpose.pose.pose, 0, False)
+		if pf.exploded:
+			return pf.reinitialise_cloud(pf.estimatedpose.pose.pose, 0, False)
 		else:
 			resampledPoses = self.resample_amcl(temp, pf.totalWeight)
 		
