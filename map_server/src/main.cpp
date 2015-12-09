@@ -29,7 +29,7 @@
 
 /* Author: Brian Gerkey */
 
-#define USAGE "\nUSAGE: map_server <map.yaml>\n" \
+#define USAGE "\nUSAGE: map_server <map.yaml> <channel name>\n" \
               "  map.yaml: map description file\n" \
               "DEPRECATED USAGE: map_server <map> <resolution>\n" \
               "  map: image file to load\n"\
