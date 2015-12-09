@@ -1,0 +1,119 @@
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/int-robot/course/!svn/ver/94/socspioneer
+END
+lgfloor.pgm
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/int-robot/course/!svn/ver/1/socspioneer/lgfloor.pgm
+END
+meeting.yaml
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/int-robot/course/!svn/ver/1/socspioneer/meeting.yaml
+END
+meeting.world.bkp
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/int-robot/course/!svn/ver/94/socspioneer/meeting.world.bkp
+END
+lgfloor.world.orig
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/int-robot/course/!svn/ver/84/socspioneer/lgfloor.world.orig
+END
+lgfloor.world
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/int-robot/course/!svn/ver/84/socspioneer/lgfloor.world
+END
+manifest.xml
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/int-robot/course/!svn/ver/1/socspioneer/manifest.xml
+END
+lgfloor.yaml
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/int-robot/course/!svn/ver/1/socspioneer/lgfloor.yaml
+END
+meeting.pgm
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/int-robot/course/!svn/ver/1/socspioneer/meeting.pgm
+END
+mainpage.dox
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/int-robot/course/!svn/ver/1/socspioneer/mainpage.dox
+END
+pioneer.launch
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/int-robot/course/!svn/ver/1/socspioneer/pioneer.launch
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/int-robot/course/!svn/ver/1/socspioneer/Makefile
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/int-robot/course/!svn/ver/1/socspioneer/CMakeLists.txt
+END
+meeting.world
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/int-robot/course/!svn/ver/93/socspioneer/meeting.world
+END
+lgfloor2.bag
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/int-robot/course/!svn/ver/1/socspioneer/lgfloor2.bag
+END
+meeting.bag
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/int-robot/course/!svn/ver/1/socspioneer/meeting.bag
+END
+keyboard_teleop.launch
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/int-robot/course/!svn/ver/84/socspioneer/keyboard_teleop.launch
+END
+p2os_laser.launch
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/int-robot/course/!svn/ver/84/socspioneer/p2os_laser.launch
+END
+teleop_joy.launch
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/int-robot/course/!svn/ver/1/socspioneer/teleop_joy.launch
+END
+p2os_teleop_joy.launch
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/int-robot/course/!svn/ver/1/socspioneer/p2os_teleop_joy.launch
+END

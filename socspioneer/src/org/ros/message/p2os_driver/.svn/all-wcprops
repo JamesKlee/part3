@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/int-robot/course/!svn/ver/1/socspioneer/src/org/ros/message/p2os_driver
+END
+AIO.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/int-robot/course/!svn/ver/1/socspioneer/src/org/ros/message/p2os_driver/AIO.java
+END
+GripperState.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/int-robot/course/!svn/ver/1/socspioneer/src/org/ros/message/p2os_driver/GripperState.java
+END
+BatteryState.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/int-robot/course/!svn/ver/1/socspioneer/src/org/ros/message/p2os_driver/BatteryState.java
+END
+DIO.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/int-robot/course/!svn/ver/1/socspioneer/src/org/ros/message/p2os_driver/DIO.java
+END
+PTZState.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/int-robot/course/!svn/ver/1/socspioneer/src/org/ros/message/p2os_driver/PTZState.java
+END
+LiftState.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/int-robot/course/!svn/ver/1/socspioneer/src/org/ros/message/p2os_driver/LiftState.java
+END
+MotorState.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/int-robot/course/!svn/ver/1/socspioneer/src/org/ros/message/p2os_driver/MotorState.java
+END
+SonarArray.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/int-robot/course/!svn/ver/1/socspioneer/src/org/ros/message/p2os_driver/SonarArray.java
+END
+GripState.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/int-robot/course/!svn/ver/1/socspioneer/src/org/ros/message/p2os_driver/GripState.java
+END
