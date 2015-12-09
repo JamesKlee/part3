@@ -8,7 +8,7 @@ from dbscan import DBScan
 
 class EstimatePose():
 
-	#Returns the average estimated pose
+	# Finds the average estimated pose
 	def avg_estimate(self, pf):
 		sumX = 0
 		sumY = 0
@@ -30,18 +30,21 @@ class EstimatePose():
 		rospy.loginfo("X: " + str(pose.position.x) +", Y: " + str(pose.position.y))
 		return pose
 		
-	#Returns the estimated pose based upon the largest cluster
+	# Estimate the pose based upon the largest cluster
 	def dbscan_estimate(self, pf):
 		eps = 0.5
 		minposes = 4
-		db = DBScan(pf.particlecloud, eps, minposes)
 		
+		# Run DBSCAN
+		db = DBScan(pf.particlecloud, eps, minposes)
 		db.run()
 
-		guess = db.getguess(pf)
+        # Get the estimate
+		guess = db.getguess()
 		self.largestClusterSize = db.largestClusterSize
-			
-		return guess
 		
+		return guess
+	
+	# Get the size of the currently largest cluster
 	def dbscan_largestclustersize(self):
 		return self.largestClusterSize

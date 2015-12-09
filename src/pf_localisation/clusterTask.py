@@ -8,11 +8,14 @@ from std_msgs.msg import Header
 from geometry_msgs.msg import Pose
 from pf_localisation.msg import Cluster
 
+# Publishes the estimated pose
+# to the cluster channel
 class ClusterTask:
 	def __init__(self):
 		self.pub = rospy.Publisher("cluster", Cluster, queue_size=5)
 		self.seq = 0
 	
+	# Generate the ROS message header
 	def gen_header(self):
 		h = Header()
 		h.stamp = rospy.Time.now()
@@ -21,7 +24,8 @@ class ClusterTask:
 		self.seq += 1
 	
 		return h
-
+    
+    # Publish the cluster message
 	def publish(self, floorName, pose, pointsInCluster, totalPoints):
 		c = Cluster()
 		c.header = self.gen_header()
@@ -31,14 +35,3 @@ class ClusterTask:
 		c.totalPoints = totalPoints
 		
 		self.pub.publish(c)
-
-def main(argv):
-	task = ClusterTask()
-	
-	rospy.init_node("cluster_task" , anonymous=True) # multiple tasks
-	
-	for i in range(1, 2):
-		task.publish(Pose(), 2)
-	
-if __name__ == "__main__":
-	main(sys.argv)

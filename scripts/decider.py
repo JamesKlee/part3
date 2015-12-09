@@ -14,6 +14,8 @@ def cluster_callback(c):
 	floor = c.floorName
 	likelihood[floor] = c.pointsInCluster / float(c.totalPoints)
 
+# normalise a dictionary as so
+# all values sum up to 1.0
 def normalise(d):
 	total = 0.0
 
@@ -29,6 +31,7 @@ def decider(floorCount):
 	
 	rate = rospy.Rate(2) # 2hz
 	
+	# wait to hear from all floors before starting
 	rospy.loginfo("waiting for " + str(floorCount) + " floor(s)")
 	
 	while len(likelihood) != floorCount and not rospy.is_shutdown():
@@ -70,7 +73,7 @@ def main(argv):
 		sys.exit(0)
 	
 	floorCount = int(argv[1])
-	
+
 	decider(floorCount)
 
 if __name__ == "__main__":
